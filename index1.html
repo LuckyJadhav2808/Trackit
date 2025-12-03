@@ -1,0 +1,3092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trackit - Gamified Productivity</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-blue: #4361ee;
+            --neon-purple: #3a0ca3;
+            --neon-pink: #f72585;
+            --neon-cyan: #4cc9f0;
+            --dark-bg: #0a0a1a;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: var(--dark-bg);
+            color: #e0e0ff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(67, 97, 238, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(244, 37, 133, 0.05) 0%, transparent 20%);
+        }
+        
+        .pixel-border {
+            border: 3px solid var(--neon-blue);
+            border-image: repeating-linear-gradient(45deg, transparent, transparent 5px, var(--neon-blue) 5px, var(--neon-blue) 10px) 3;
+            box-shadow: 0 0 10px rgba(67, 97, 238, 0.5);
+        }
+        
+        .pixel-border-pink {
+            border: 3px solid var(--neon-pink);
+            border-image: repeating-linear-gradient(45deg, transparent, transparent 5px, var(--neon-pink) 5px, var(--neon-pink) 10px) 3;
+            box-shadow: 0 0 10px rgba(244, 37, 133, 0.5);
+        }
+        
+        .pixel-border-cyan {
+            border: 3px solid var(--neon-cyan);
+            border-image: repeating-linear-gradient(45deg, transparent, transparent 5px, var(--neon-cyan) 5px, var(--neon-cyan) 10px) 3;
+            box-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
+        }
+        
+        h1, h2, h3, .pixel-font {
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+        }
+        
+        .neon-blue { color: var(--neon-blue); }
+        .neon-pink { color: var(--neon-pink); }
+        .neon-cyan { color: var(--neon-cyan); }
+        .neon-purple { color: var(--neon-purple); }
+        
+        .glow {
+            box-shadow: 0 0 15px currentColor;
+        }
+        
+        .xp-bar, .health-bar {
+            height: 20px;
+            background: linear-gradient(to right, #111 0%, #222 100%);
+            border: 2px solid #333;
+            border-radius: 0;
+            overflow: hidden;
+        }
+        
+        .xp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-purple), var(--neon-blue), var(--neon-cyan));
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .health-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff5500, #ffaa00);
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 0;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .achievement-badge {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto;
+            border: 3px solid;
+            transition: all 0.3s ease;
+        }
+        
+        .achievement-badge.locked {
+            filter: grayscale(1);
+            opacity: 0.5;
+        }
+        
+        .achievement-badge.unlocked {
+            animation: unlock 0.5s ease forwards;
+        }
+        
+        @keyframes unlock {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(67, 97, 238, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(67, 97, 238, 0); }
+        }
+        
+        .mobile-menu {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+        
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .habit-day {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #333;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .habit-day.completed {
+            background-color: var(--neon-blue);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+        
+        .habit-day.partial {
+            background: linear-gradient(135deg, var(--neon-blue) 50%, #222 50%);
+            border-color: var(--neon-cyan);
+        }
+        
+        .crop-area {
+            position: absolute;
+            border: 2px dashed var(--neon-cyan);
+            cursor: move;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+        }
+        
+        .password-item {
+            position: relative;
+        }
+        
+        .password-mask {
+            font-family: 'Press Start 2P', cursive;
+            letter-spacing: 2px;
+        }
+        
+        /* Mobile Navigation */
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 2px solid var(--neon-blue);
+            z-index: 40;
+            padding: 10px 0;
+        }
+        
+        .mobile-nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 100%;
+            padding: 0 20px;
+        }
+        
+        .mobile-nav-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-nav-btn:active {
+            transform: scale(0.9);
+        }
+        
+        .mobile-nav-center {
+            flex: 1;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        .mobile-nav-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.8rem;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 5px var(--neon-cyan);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+            .mobile-touch-button {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .habit-day {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .section-content {
+                padding-bottom: 100px; /* Space for mobile navigation */
+            }
+            
+            .mobile-nav-btn {
+                min-width: 50px;
+                min-height: 50px;
+            }
+        }
+        
+        @media (min-width: 641px) {
+            .mobile-nav {
+                display: none;
+            }
+            
+            .section-content {
+                padding-bottom: 40px;
+            }
+        }
+        
+        /* Section indicators */
+        .section-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .section-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .section-indicator.active {
+            background-color: var(--neon-cyan);
+            box-shadow: 0 0 8px var(--neon-cyan);
+            transform: scale(1.2);
+        }
+        
+        /* Swipe support */
+        .swipe-area {
+            min-height: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <!-- Mobile Header -->
+    <header class="sticky top-0 z-50 bg-gray-900/90 backdrop-blur-md border-b border-neon-blue/30">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center">
+                <button id="menuToggle" class="mobile-touch-button p-2 mr-4">
+                    <div class="w-6 h-1 bg-neon-cyan mb-1"></div>
+                    <div class="w-6 h-1 bg-neon-cyan mb-1"></div>
+                    <div class="w-4 h-1 bg-neon-cyan"></div>
+                </button>
+                <h1 class="text-xl pixel-font neon-text neon-cyan">TRACKIT</h1>
+            </div>
+            <div class="flex items-center">
+                <div class="mr-4 text-right">
+                    <div class="text-sm neon-text neon-pink">Level <span id="currentLevel">1</span></div>
+                    <div class="text-xs">XP: <span id="currentXP">0</span>/<span id="nextLevelXP">100</span></div>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gray-800 border-2 border-neon-blue flex items-center justify-center">
+                    <span id="avatarLevel" class="pixel-font text-lg neon-cyan">1</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu fixed inset-y-0 left-0 z-50 w-64 bg-gray-900/95 backdrop-blur-lg border-r border-neon-blue p-6">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-xl pixel-font neon-text neon-cyan">MENU</h2>
+            <button id="closeMenu" class="mobile-touch-button p-2 text-neon-pink text-xl">&times;</button>
+        </div>
+        
+        <nav class="space-y-4">
+            <button data-section="dashboard" class="section-btn w-full text-left p-3 hover:bg-gray-800/50 rounded-lg border border-transparent hover:border-neon-blue flex items-center mobile-touch-button">
+                <span class="mr-3 text-neon-cyan">📊</span>
+                <span>Dashboard</span>
+            </button>
+            <button data-section="habits" class="section-btn w-full text-left p-3 hover:bg-gray-800/50 rounded-lg border border-transparent hover:border-neon-blue flex items-center mobile-touch-button">
+                <span class="mr-3 text-neon-cyan">✅</span>
+                <span>Habit Tracker</span>
+            </button>
+            <button data-section="tasks" class="section-btn w-full text-left p-3 hover:bg-gray-800/50 rounded-lg border border-transparent hover:border-neon-blue flex items-center mobile-touch-button">
+                <span class="mr-3 text-neon-cyan">📝</span>
+                <span>Task Manager</span>
+            </button>
+            <button data-section="vault" class="section-btn w-full text-left p-3 hover:bg-gray-800/50 rounded-lg border border-transparent hover:border-neon-blue flex items-center mobile-touch-button">
+                <span class="mr-3 text-neon-cyan">🔒</span>
+                <span>Vault</span>
+            </button>
+            <button data-section="profile" class="section-btn w-full text-left p-3 hover:bg-gray-800/50 rounded-lg border border-transparent hover:border-neon-blue flex items-center mobile-touch-button">
+                <span class="mr-3 text-neon-cyan">👤</span>
+                <span>Profile</span>
+            </button>
+            <button data-section="achievements" class="section-btn w-full text-left p-3 hover:bg-gray-800/50 rounded-lg border border-transparent hover:border-neon-blue flex items-center mobile-touch-button">
+                <span class="mr-3 text-neon-cyan">🏆</span>
+                <span>Achievements</span>
+            </button>
+            <button data-section="backup" class="section-btn w-full text-left p-3 hover:bg-gray-800/50 rounded-lg border border-transparent hover:border-neon-blue flex items-center mobile-touch-button">
+                <span class="mr-3 text-neon-cyan">💾</span>
+                <span>Backup</span>
+            </button>
+        </nav>
+        
+        <div class="absolute bottom-6 left-6 right-6">
+            <div class="xp-bar mb-4">
+                <div id="xpBarFill" class="xp-bar-fill" style="width: 0%"></div>
+            </div>
+            <div class="text-center text-sm">
+                <div class="neon-text neon-cyan">Daily Streak: <span id="streakCount">0</span> days</div>
+                <div class="text-xs mt-1">Last login: <span id="lastLogin">Today</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6 section-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <div class="mb-6">
+                <h2 class="text-2xl pixel-font neon-text neon-blue mb-2">DASHBOARD</h2>
+                <p class="text-gray-400">Complete tasks, build habits, earn XP and level up!</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Stats Card -->
+                <div class="bg-gray-800/50 p-4 rounded-lg pixel-border">
+                    <h3 class="text-lg mb-4 neon-text neon-pink">STATS</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span>Level</span>
+                            <span class="neon-cyan font-bold" id="dashLevel">1</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Total XP</span>
+                            <span class="neon-cyan font-bold" id="dashXP">0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Habits Today</span>
+                            <span class="neon-cyan font-bold" id="dashHabits">0/0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Tasks This Month</span>
+                            <span class="neon-cyan font-bold" id="dashTasks">0/0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Login Streak</span>
+                            <span class="neon-cyan font-bold" id="dashStreak">0 days</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="bg-gray-800/50 p-4 rounded-lg pixel-border">
+                    <h3 class="text-lg mb-4 neon-text neon-pink">QUICK ACTIONS</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="quickAddHabit" class="mobile-touch-button p-3 bg-gray-700 hover:bg-gray-600 rounded border border-gray-600 hover:border-neon-blue transition">
+                            <span class="block text-neon-cyan text-xl mb-1">+</span>
+                            <span class="text-sm">Add Habit</span>
+                        </button>
+                        <button id="quickAddTask" class="mobile-touch-button p-3 bg-gray-700 hover:bg-gray-600 rounded border border-gray-600 hover:border-neon-blue transition">
+                            <span class="block text-neon-cyan text-xl mb-1">+</span>
+                            <span class="text-sm">Add Task</span>
+                        </button>
+                        <button id="quickAddResource" class="mobile-touch-button p-3 bg-gray-700 hover:bg-gray-600 rounded border border-gray-600 hover:border-neon-blue transition">
+                            <span class="block text-neon-cyan text-xl mb-1">+</span>
+                            <span class="text-sm">Add Resource</span>
+                        </button>
+                        <button id="quickRandomTask" class="mobile-touch-button p-3 bg-gray-700 hover:bg-gray-600 rounded border border-gray-600 hover:border-neon-blue transition">
+                            <span class="block text-neon-cyan text-xl mb-1">🎲</span>
+                            <span class="text-sm">Random Task</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="bg-gray-800/50 p-4 rounded-lg pixel-border">
+                <h3 class="text-lg mb-4 neon-text neon-pink">RECENT ACTIVITY</h3>
+                <div id="recentActivity" class="space-y-2">
+                    <div class="text-gray-400 italic">No recent activity yet. Complete tasks to see activity here!</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Habit Tracker Section -->
+        <section id="habits" class="section">
+            <div class="mb-6">
+                <h2 class="text-2xl pixel-font neon-text neon-blue mb-2">HABIT TRACKER</h2>
+                <p class="text-gray-400">Track daily habits and build streaks to earn bonus XP!</p>
+            </div>
+            
+            <div class="mb-6">
+                <button id="addHabitBtn" class="mobile-touch-button px-4 py-3 bg-neon-blue hover:bg-blue-600 rounded-lg font-bold flex items-center glow">
+                    <span class="mr-2">+</span> Add New Habit
+                </button>
+            </div>
+            
+            <!-- Habit List -->
+            <div id="habitsList" class="space-y-6">
+                <!-- Habits will be dynamically added here -->
+            </div>
+            
+            <!-- Add Habit Modal -->
+            <div id="addHabitModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden">
+                <div class="bg-gray-800 w-11/12 max-w-md p-6 rounded-lg pixel-border">
+                    <h3 class="text-xl pixel-font neon-text neon-pink mb-4">ADD NEW HABIT</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block mb-2">Habit Name</label>
+                            <input type="text" id="habitName" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none" placeholder="e.g., Drink 8 glasses of water">
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-2">Category</label>
+                            <select id="habitCategory" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none">
+                                <option value="health">Health</option>
+                                <option value="work">Work</option>
+                                <option value="learning">Learning</option>
+                                <option value="personal">Personal</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-2">Type</label>
+                            <select id="habitType" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none">
+                                <option value="binary">Yes/No (Done or Not)</option>
+                                <option value="countable">Countable (e.g., 8 glasses of water)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-2">Target (for countable habits)</label>
+                            <input type="number" id="habitTarget" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none" placeholder="e.g., 8" min="1" value="1">
+                        </div>
+                        
+                        <div class="flex justify-between pt-4">
+                            <button id="cancelHabitBtn" class="mobile-touch-button px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded">Cancel</button>
+                            <button id="saveHabitBtn" class="mobile-touch-button px-4 py-2 bg-neon-blue hover:bg-blue-600 rounded font-bold">Save Habit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Task Manager Section -->
+        <section id="tasks" class="section">
+            <div class="mb-6">
+                <h2 class="text-2xl pixel-font neon-text neon-blue mb-2">TASK MANAGER</h2>
+                <p class="text-gray-400">Manage monthly tasks with priorities and deadlines.</p>
+            </div>
+            
+            <div class="mb-6 flex space-x-4">
+                <button id="addTaskBtn" class="mobile-touch-button px-4 py-3 bg-neon-blue hover:bg-blue-600 rounded-lg font-bold flex items-center glow">
+                    <span class="mr-2">+</span> Add Task
+                </button>
+                <div class="flex-1">
+                    <select id="taskFilter" class="w-full p-3 bg-gray-800 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none">
+                        <option value="all">All Tasks</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                        <option value="high">High Priority</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Task Stats -->
+            <div class="mb-6 p-4 bg-gray-800/50 rounded-lg pixel-border">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg neon-text neon-pink">Monthly Progress</h3>
+                        <p class="text-sm text-gray-400" id="currentMonth">November 2023</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold neon-cyan" id="taskCompletion">0%</div>
+                        <div class="text-sm text-gray-400">Tasks Complete</div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="health-bar">
+                        <div id="taskProgressBar" class="health-bar-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Task List -->
+            <div id="tasksList" class="space-y-4">
+                <!-- Tasks will be dynamically added here -->
+            </div>
+            
+            <!-- Add Task Modal -->
+            <div id="addTaskModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden">
+                <div class="bg-gray-800 w-11/12 max-w-md p-6 rounded-lg pixel-border">
+                    <h3 class="text-xl pixel-font neon-text neon-pink mb-4">ADD NEW TASK</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block mb-2">Task Title</label>
+                            <input type="text" id="taskTitle" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none" placeholder="e.g., Finish project report">
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-2">Description</label>
+                            <textarea id="taskDescription" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none" rows="3" placeholder="Task details..."></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block mb-2">Priority</label>
+                                <select id="taskPriority" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block mb-2">Due Date</label>
+                                <input type="date" id="taskDueDate" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none">
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between pt-4">
+                            <button id="cancelTaskBtn" class="mobile-touch-button px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded">Cancel</button>
+                            <button id="saveTaskBtn" class="mobile-touch-button px-4 py-2 bg-neon-blue hover:bg-blue-600 rounded font-bold">Save Task</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vault Section -->
+        <section id="vault" class="section">
+            <div class="mb-6">
+                <h2 class="text-2xl pixel-font neon-text neon-blue mb-2">VAULT</h2>
+                <p class="text-gray-400">Securely store PDFs, links, and passwords (encrypted in localStorage).</p>
+            </div>
+            
+            <!-- Vault Tabs -->
+            <div class="mb-6 border-b border-gray-700">
+                <div class="flex space-x-4">
+                    <button data-vault-tab="passwords" class="vault-tab-btn mobile-touch-button px-4 py-3 border-b-2 border-transparent hover:border-neon-cyan active">Passwords</button>
+                    <button data-vault-tab="links" class="vault-tab-btn mobile-touch-button px-4 py-3 border-b-2 border-transparent hover:border-neon-cyan">Links</button>
+                    <button data-vault-tab="pdfs" class="vault-tab-btn mobile-touch-button px-4 py-3 border-b-2 border-transparent hover:border-neon-cyan">PDFs</button>
+                </div>
+            </div>
+            
+            <!-- Passwords Tab -->
+            <div id="vault-passwords" class="vault-tab-content">
+                <div class="mb-6">
+                    <button id="addPasswordBtn" class="mobile-touch-button px-4 py-3 bg-neon-blue hover:bg-blue-600 rounded-lg font-bold flex items-center glow">
+                        <span class="mr-2">+</span> Add Password
+                    </button>
+                </div>
+                
+                <div id="passwordsList" class="space-y-4">
+                    <!-- Passwords will be dynamically added here -->
+                </div>
+            </div>
+            
+            <!-- Links Tab -->
+            <div id="vault-links" class="vault-tab-content hidden">
+                <div class="mb-6">
+                    <button id="addLinkBtn" class="mobile-touch-button px-4 py-3 bg-neon-blue hover:bg-blue-600 rounded-lg font-bold flex items-center glow">
+                        <span class="mr-2">+</span> Add Link
+                    </button>
+                </div>
+                
+                <div id="linksList" class="space-y-4">
+                    <!-- Links will be dynamically added here -->
+                </div>
+            </div>
+            
+            <!-- PDFs Tab -->
+            <div id="vault-pdfs" class="vault-tab-content hidden">
+                <div class="mb-6">
+                    <button id="addPdfBtn" class="mobile-touch-button px-4 py-3 bg-neon-blue hover:bg-blue-600 rounded-lg font-bold flex items-center glow">
+                        <span class="mr-2">+</span> Add PDF
+                    </button>
+                </div>
+                
+                <div id="pdfsList" class="space-y-4">
+                    <!-- PDFs will be dynamically added here -->
+                    <div class="p-4 bg-gray-800/50 rounded-lg pixel-border">
+                        <p class="text-gray-400">Note: Since we're using localStorage, PDFs will be stored as Base64 strings (limited to ~5MB).</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Add Password Modal -->
+            <div id="addPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden">
+                <div class="bg-gray-800 w-11/12 max-w-md p-6 rounded-lg pixel-border">
+                    <h3 class="text-xl pixel-font neon-text neon-pink mb-4">ADD PASSWORD</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block mb-2">Website/Service</label>
+                            <input type="text" id="passwordWebsite" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none" placeholder="e.g., Google">
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-2">Username/Email</label>
+                            <input type="text" id="passwordUsername" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none" placeholder="e.g., user@example.com">
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-2">Password</label>
+                            <div class="flex">
+                                <input type="password" id="passwordValue" class="flex-1 p-3 bg-gray-900 border border-gray-700 rounded-l focus:border-neon-cyan focus:outline-none" placeholder="Enter password">
+                                <button id="togglePassword" class="bg-gray-700 px-4 rounded-r border border-l-0 border-gray-700">👁</button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-2">Master Password (for encryption)</label>
+                            <input type="password" id="masterPassword" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none" placeholder="Your master password">
+                            <p class="text-xs text-gray-400 mt-1">This will be used to encrypt your password. Remember it!</p>
+                        </div>
+                        
+                        <div class="flex justify-between pt-4">
+                            <button id="cancelPasswordBtn" class="mobile-touch-button px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded">Cancel</button>
+                            <button id="savePasswordBtn" class="mobile-touch-button px-4 py-2 bg-neon-blue hover:bg-blue-600 rounded font-bold">Save Password</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profile" class="section">
+            <div class="mb-6">
+                <h2 class="text-2xl pixel-font neon-text neon-blue mb-2">PROFILE</h2>
+                <p class="text-gray-400">Customize your profile with banner photo and personal details.</p>
+            </div>
+            
+            <!-- Banner Area -->
+            <div class="mb-6">
+                <div id="bannerContainer" class="relative h-48 bg-gradient-to-r from-gray-800 to-gray-900 rounded-lg overflow-hidden pixel-border">
+                    <img id="bannerImage" src="" alt="Profile Banner" class="w-full h-full object-cover hidden">
+                    <div id="bannerPlaceholder" class="w-full h-full flex items-center justify-center text-gray-400">
+                        <div class="text-center">
+                            <div class="text-4xl mb-2">🖼️</div>
+                            <p>Upload a banner image</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Crop Area (hidden by default) -->
+                    <div id="cropArea" class="crop-area hidden"></div>
+                    
+                    <!-- Banner Controls -->
+                    <div class="absolute bottom-4 right-4 flex space-x-2">
+                        <button id="uploadBannerBtn" class="mobile-touch-button px-4 py-2 bg-gray-800/80 hover:bg-gray-700/80 rounded backdrop-blur-sm">
+                            Upload
+                        </button>
+                        <button id="cropBannerBtn" class="mobile-touch-button px-4 py-2 bg-gray-800/80 hover:bg-gray-700/80 rounded backdrop-blur-sm hidden">
+                            Crop
+                        </button>
+                        <button id="saveCropBtn" class="mobile-touch-button px-4 py-2 bg-neon-blue/80 hover:bg-blue-600/80 rounded backdrop-blur-sm hidden">
+                            Save Crop
+                        </button>
+                        <button id="cancelCropBtn" class="mobile-touch-button px-4 py-2 bg-gray-800/80 hover:bg-gray-700/80 rounded backdrop-blur-sm hidden">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Hidden file input for banner upload -->
+                <input type="file" id="bannerUpload" accept="image/*" class="hidden">
+            </div>
+            
+            <!-- Profile Info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gray-800/50 p-6 rounded-lg pixel-border">
+                    <h3 class="text-lg mb-4 neon-text neon-pink">PROFILE INFO</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block mb-2">Display Name</label>
+                            <input type="text" id="profileName" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none" placeholder="Enter your name">
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-2">Bio</label>
+                            <textarea id="profileBio" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none" rows="3" placeholder="Tell us about yourself..."></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-2">Theme Color</label>
+                            <select id="profileTheme" class="w-full p-3 bg-gray-900 border border-gray-700 rounded focus:border-neon-cyan focus:outline-none">
+                                <option value="blue">Neon Blue</option>
+                                <option value="pink">Neon Pink</option>
+                                <option value="cyan">Neon Cyan</option>
+                                <option value="purple">Neon Purple</option>
+                            </select>
+                        </div>
+                        
+                        <button id="saveProfileBtn" class="mobile-touch-button w-full py-3 bg-neon-blue hover:bg-blue-600 rounded-lg font-bold mt-4">
+                            Save Profile
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800/50 p-6 rounded-lg pixel-border">
+                    <h3 class="text-lg mb-4 neon-text neon-pink">CHARACTER STATS</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>Productivity</span>
+                                <span class="neon-cyan">65%</span>
+                            </div>
+                            <div class="xp-bar">
+                                <div class="xp-bar-fill" style="width: 65%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>Consistency</span>
+                                <span class="neon-cyan">42%</span>
+                            </div>
+                            <div class="xp-bar">
+                                <div class="xp-bar-fill" style="width: 42%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>Knowledge</span>
+                                <span class="neon-cyan">78%</span>
+                            </div>
+                            <div class="xp-bar">
+                                <div class="xp-bar-fill" style="width: 78%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span>Health</span>
+                                <span class="neon-cyan">30%</span>
+                            </div>
+                            <div class="xp-bar">
+                                <div class="xp-bar-fill" style="width: 30%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 pt-4 border-t border-gray-700">
+                        <h4 class="text-md mb-2 neon-text neon-cyan">Active Boosts</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center">
+                                <span class="mr-2">🔥</span>
+                                <span>Login Streak: <span class="neon-cyan">+10% XP</span></span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="mr-2">⚡</span>
+                                <span>Task Completion: <span class="neon-cyan">+5% XP</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Achievements Section -->
+        <section id="achievements" class="section">
+            <div class="mb-6">
+                <h2 class="text-2xl pixel-font neon-text neon-blue mb-2">ACHIEVEMENTS</h2>
+                <p class="text-gray-400">Unlock achievements by completing tasks and building habits!</p>
+            </div>
+            
+            <!-- Achievement Stats -->
+            <div class="mb-6 p-4 bg-gray-800/50 rounded-lg pixel-border">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg neon-text neon-pink">Progress</h3>
+                        <p class="text-sm text-gray-400">Unlock achievements to earn bonus XP</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold neon-cyan" id="achievementProgress">0/12</div>
+                        <div class="text-sm text-gray-400">Achievements Unlocked</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Achievements Grid -->
+            <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <!-- Achievements will be dynamically added here -->
+            </div>
+        </section>
+
+        <!-- Backup Section -->
+        <section id="backup" class="section">
+            <div class="mb-6">
+                <h2 class="text-2xl pixel-font neon-text neon-blue mb-2">BACKUP & RESTORE</h2>
+                <p class="text-gray-400">Export your data as a JSON file or import previously saved data.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Export Card -->
+                <div class="bg-gray-800/50 p-6 rounded-lg pixel-border">
+                    <h3 class="text-lg mb-4 neon-text neon-pink">EXPORT DATA</h3>
+                    <p class="mb-4 text-gray-300">Export all your Trackit data (habits, tasks, vault, profile) to a JSON file.</p>
+                    
+                    <div class="mb-6 p-4 bg-gray-900/50 rounded">
+                        <h4 class="text-md mb-2 neon-cyan">What's included:</h4>
+                        <ul class="space-y-1 text-sm">
+                            <li class="flex items-center">
+                                <span class="mr-2">✅</span>
+                                <span>All habits and completion data</span>
+                            </li>
+                            <li class="flex items-center">
+                                <span class="mr-2">✅</span>
+                                <span>Tasks and completion status</span>
+                            </li>
+                            <li class="flex items-center">
+                                <span class="mr-2">✅</span>
+                                <span>Vault data (encrypted)</span>
+                            </li>
+                            <li class="flex items-center">
+                                <span class="mr-2">✅</span>
+                                <span>Profile and settings</span>
+                            </li>
+                            <li class="flex items-center">
+                                <span class="mr-2">✅</span>
+                                <span>Achievements and XP</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <button id="exportDataBtn" class="mobile-touch-button w-full py-3 bg-neon-blue hover:bg-blue-600 rounded-lg font-bold">
+                        Export Data as JSON
+                    </button>
+                </div>
+                
+                <!-- Import Card -->
+                <div class="bg-gray-800/50 p-6 rounded-lg pixel-border">
+                    <h3 class="text-lg mb-4 neon-text neon-pink">IMPORT DATA</h3>
+                    <p class="mb-4 text-gray-300">Import previously exported Trackit data from a JSON file.</p>
+                    
+                    <div class="mb-6 p-4 bg-gray-900/50 rounded">
+                        <h4 class="text-md mb-2 neon-cyan">Warning:</h4>
+                        <ul class="space-y-1 text-sm text-yellow-300">
+                            <li class="flex items-center">
+                                <span class="mr-2">⚠️</span>
+                                <span>This will overwrite your current data</span>
+                            </li>
+                            <li class="flex items-center">
+                                <span class="mr-2">⚠️</span>
+                                <span>Only import files from trusted sources</span>
+                            </li>
+                            <li class="flex items-center">
+                                <span class="mr-2">⚠️</span>
+                                <span>Make sure you have a backup first</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <input type="file" id="importFile" accept=".json" class="hidden">
+                        <button id="importFileBtn" class="mobile-touch-button w-full py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold mb-2">
+                            Select JSON File
+                        </button>
+                        <div id="importFileName" class="text-sm text-gray-400 text-center"></div>
+                    </div>
+                    
+                    <button id="importDataBtn" class="mobile-touch-button w-full py-3 bg-neon-pink hover:bg-pink-600 rounded-lg font-bold" disabled>
+                        Import Data
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Data Management -->
+            <div class="mt-8 bg-gray-800/50 p-6 rounded-lg pixel-border">
+                <h3 class="text-lg mb-4 neon-text neon-pink">DATA MANAGEMENT</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button id="clearHabitsBtn" class="mobile-touch-button py-3 bg-gray-700 hover:bg-gray-600 rounded-lg">
+                        Clear Habits Data
+                    </button>
+                    <button id="clearTasksBtn" class="mobile-touch-button py-3 bg-gray-700 hover:bg-gray-600 rounded-lg">
+                        Clear Tasks Data
+                    </button>
+                    <button id="clearAllBtn" class="mobile-touch-button py-3 bg-red-800/50 hover:bg-red-700/50 rounded-lg border border-red-700/50">
+                        Clear All Data
+                    </button>
+                </div>
+                
+                <div class="mt-4 text-xs text-gray-400">
+                    <p>Note: Clearing data is permanent. Make sure to export your data first if you want to keep it.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Mobile Navigation Bar -->
+    <div class="mobile-nav">
+        <div class="mobile-nav-inner">
+            <button id="prevSectionBtn" class="mobile-nav-btn bg-gray-800/80 border border-neon-blue/50 text-neon-cyan hover:bg-gray-700/80 mobile-touch-button">
+                ←
+            </button>
+            
+            <div class="mobile-nav-center">
+                <div id="currentSectionTitle" class="mobile-nav-title">Dashboard</div>
+                <div class="section-indicators">
+                    <div class="section-indicator active" data-section="dashboard"></div>
+                    <div class="section-indicator" data-section="habits"></div>
+                    <div class="section-indicator" data-section="tasks"></div>
+                    <div class="section-indicator" data-section="vault"></div>
+                    <div class="section-indicator" data-section="profile"></div>
+                    <div class="section-indicator" data-section="achievements"></div>
+                    <div class="section-indicator" data-section="backup"></div>
+                </div>
+            </div>
+            
+            <button id="nextSectionBtn" class="mobile-nav-btn bg-gray-800/80 border border-neon-blue/50 text-neon-cyan hover:bg-gray-700/80 mobile-touch-button">
+                →
+            </button>
+        </div>
+    </div>
+
+    <!-- Audio Context for Sound Effects -->
+    <audio id="clickSound" src=""></audio>
+    <audio id="completeSound" src=""></audio>
+    <audio id="levelUpSound" src=""></audio>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-20 right-4 bg-gray-800 border-l-4 border-neon-cyan p-4 rounded-lg shadow-lg max-w-xs z-50 hidden">
+        <div class="flex items-start">
+            <div class="mr-3 text-2xl">🎉</div>
+            <div>
+                <h4 class="font-bold neon-cyan" id="toastTitle">Notification</h4>
+                <p class="text-sm" id="toastMessage">This is a notification message.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
+        <div class="text-center">
+            <div class="w-16 h-16 border-4 border-neon-cyan border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="neon-text neon-cyan">Loading...</p>
+        </div>
+    </div>
+
+    <script>
+        // Trackit Application - Main JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the application
+            initApp();
+        });
+
+        // Application State
+        const AppState = {
+            currentSection: 'dashboard',
+            sections: ['dashboard', 'habits', 'tasks', 'vault', 'profile', 'achievements', 'backup'],
+            sectionTitles: {
+                dashboard: 'Dashboard',
+                habits: 'Habit Tracker',
+                tasks: 'Task Manager',
+                vault: 'Resource Vault',
+                profile: 'Profile',
+                achievements: 'Achievements',
+                backup: 'Backup & Restore'
+            },
+            userData: {
+                profile: null,
+                habits: [],
+                tasks: [],
+                vault: {
+                    passwords: [],
+                    links: [],
+                    pdfs: []
+                },
+                achievements: [],
+                stats: null
+            },
+            currentDate: new Date(),
+            xp: 0,
+            level: 1,
+            streak: 0,
+            lastLogin: null
+        };
+
+        // XP Requirements per level (simple formula: 100 * level^2)
+        const getXPForLevel = (level) => Math.floor(100 * Math.pow(level, 1.5));
+
+        // Achievements Data
+        const ACHIEVEMENTS = [
+            { id: 'first_habit', name: 'First Step', description: 'Complete your first habit', icon: '🚀', xp: 50, unlocked: false },
+            { id: 'task_master', name: 'Task Master', description: 'Complete 10 tasks', icon: '✅', xp: 100, unlocked: false },
+            { id: 'streak_3', name: 'Consistent', description: '3-day login streak', icon: '🔥', xp: 75, unlocked: false },
+            { id: 'streak_7', name: 'Dedicated', description: '7-day login streak', icon: '🏆', xp: 200, unlocked: false },
+            { id: 'level_5', name: 'Growing Strong', description: 'Reach level 5', icon: '⭐', xp: 250, unlocked: false },
+            { id: 'level_10', name: 'Productivity Guru', description: 'Reach level 10', icon: '👑', xp: 500, unlocked: false },
+            { id: 'habit_king', name: 'Habit King', description: 'Complete 50 habits', icon: '👑', xp: 300, unlocked: false },
+            { id: 'vault_keeper', name: 'Vault Keeper', description: 'Store 5 items in vault', icon: '🔒', xp: 150, unlocked: false },
+            { id: 'all_tasks', name: 'Completionist', description: 'Complete all tasks in a month', icon: '🎯', xp: 400, unlocked: false },
+            { id: 'profile_complete', name: 'Self-Expression', description: 'Complete your profile', icon: '🎨', xp: 100, unlocked: false },
+            { id: 'early_bird', name: 'Early Bird', description: 'Complete a habit before 8 AM', icon: '🌅', xp: 75, unlocked: false },
+            { id: 'night_owl', name: 'Night Owl', description: 'Complete a task after 10 PM', icon: '🦉', xp: 75, unlocked: false }
+        ];
+
+        // Initialize the application
+        function initApp() {
+            // Load data from localStorage
+            loadAppData();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Update UI with loaded data
+            updateUI();
+            
+            // Check for daily login streak
+            checkDailyLogin();
+            
+            // Show dashboard by default
+            showSection('dashboard');
+            
+            // Setup swipe gestures for mobile
+            setupSwipeGestures();
+            
+            // Play startup sound
+            playSound('click');
+            
+            // Show welcome notification
+            showNotification('Welcome to Trackit!', 'Start tracking your habits and earning XP!');
+        }
+
+        // Load all application data from localStorage
+        function loadAppData() {
+            // Load user profile
+            const profile = localStorage.getItem('trackit_profile');
+            AppState.userData.profile = profile ? JSON.parse(profile) : {
+                name: 'Tracker',
+                bio: 'Productivity enthusiast',
+                theme: 'blue',
+                banner: null
+            };
+            
+            // Load habits
+            const habits = localStorage.getItem('trackit_habits');
+            AppState.userData.habits = habits ? JSON.parse(habits) : [
+                { id: 1, name: 'Morning Exercise', category: 'health', type: 'binary', target: 1, completions: {}, streak: 0 }
+            ];
+            
+            // Load tasks
+            const tasks = localStorage.getItem('trackit_tasks');
+            AppState.userData.tasks = tasks ? JSON.parse(tasks) : [
+                { id: 1, title: 'Welcome Task', description: 'Complete this task to get started!', priority: 'medium', dueDate: new Date().toISOString().split('T')[0], completed: false, createdAt: new Date().toISOString() }
+            ];
+            
+            // Load vault data
+            const vault = localStorage.getItem('trackit_vault');
+            AppState.userData.vault = vault ? JSON.parse(vault) : {
+                passwords: [],
+                links: [],
+                pdfs: []
+            };
+            
+            // Load achievements
+            const achievements = localStorage.getItem('trackit_achievements');
+            AppState.userData.achievements = achievements ? JSON.parse(achievements) : ACHIEVEMENTS;
+            
+            // Load stats
+            const stats = localStorage.getItem('trackit_stats');
+            AppState.userData.stats = stats ? JSON.parse(stats) : {
+                xp: 0,
+                level: 1,
+                streak: 0,
+                lastLogin: new Date().toISOString(),
+                totalHabitsCompleted: 0,
+                totalTasksCompleted: 0
+            };
+            
+            // Update AppState from stats
+            AppState.xp = AppState.userData.stats.xp;
+            AppState.level = AppState.userData.stats.level;
+            AppState.streak = AppState.userData.stats.streak;
+            AppState.lastLogin = AppState.userData.stats.lastLogin;
+        }
+
+        // Save all application data to localStorage
+        function saveAppData() {
+            // Update stats
+            AppState.userData.stats = {
+                xp: AppState.xp,
+                level: AppState.level,
+                streak: AppState.streak,
+                lastLogin: AppState.lastLogin || new Date().toISOString(),
+                totalHabitsCompleted: AppState.userData.stats.totalHabitsCompleted || 0,
+                totalTasksCompleted: AppState.userData.stats.totalTasksCompleted || 0
+            };
+            
+            // Save all data
+            localStorage.setItem('trackit_profile', JSON.stringify(AppState.userData.profile));
+            localStorage.setItem('trackit_habits', JSON.stringify(AppState.userData.habits));
+            localStorage.setItem('trackit_tasks', JSON.stringify(AppState.userData.tasks));
+            localStorage.setItem('trackit_vault', JSON.stringify(AppState.userData.vault));
+            localStorage.setItem('trackit_achievements', JSON.stringify(AppState.userData.achievements));
+            localStorage.setItem('trackit_stats', JSON.stringify(AppState.userData.stats));
+        }
+
+        // Setup all event listeners
+        function setupEventListeners() {
+            // Mobile menu toggle
+            document.getElementById('menuToggle').addEventListener('click', toggleMobileMenu);
+            document.getElementById('closeMenu').addEventListener('click', toggleMobileMenu);
+            
+            // Section navigation
+            document.querySelectorAll('.section-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    showSection(section);
+                    toggleMobileMenu();
+                });
+            });
+            
+            // Navigation buttons
+            document.getElementById('prevSectionBtn').addEventListener('click', goToPreviousSection);
+            document.getElementById('nextSectionBtn').addEventListener('click', goToNextSection);
+            
+            // Section indicator clicks
+            document.querySelectorAll('.section-indicator').forEach(indicator => {
+                indicator.addEventListener('click', function() {
+                    const section = this.getAttribute('data-section');
+                    showSection(section);
+                });
+            });
+            
+            // Quick action buttons
+            document.getElementById('quickAddHabit').addEventListener('click', function() {
+                showSection('habits');
+                document.getElementById('addHabitBtn').click();
+            });
+            
+            document.getElementById('quickAddTask').addEventListener('click', function() {
+                showSection('tasks');
+                document.getElementById('addTaskBtn').click();
+            });
+            
+            document.getElementById('quickAddResource').addEventListener('click', function() {
+                showSection('vault');
+                document.getElementById('addPasswordBtn').click();
+            });
+            
+            document.getElementById('quickRandomTask').addEventListener('click', function() {
+                // Pick a random task to complete
+                const pendingTasks = AppState.userData.tasks.filter(task => !task.completed);
+                if (pendingTasks.length > 0) {
+                    const randomTask = pendingTasks[Math.floor(Math.random() * pendingTasks.length)];
+                    completeTask(randomTask.id);
+                    showNotification('Random Task Completed!', `"${randomTask.title}" is now complete!`);
+                } else {
+                    showNotification('No Tasks', 'All tasks are already completed!');
+                }
+            });
+            
+            // Habit tracker functionality
+            document.getElementById('addHabitBtn').addEventListener('click', function() {
+                document.getElementById('addHabitModal').classList.remove('hidden');
+            });
+            
+            document.getElementById('cancelHabitBtn').addEventListener('click', function() {
+                document.getElementById('addHabitModal').classList.add('hidden');
+                clearHabitForm();
+            });
+            
+            document.getElementById('saveHabitBtn').addEventListener('click', saveHabit);
+            
+            // Task manager functionality
+            document.getElementById('addTaskBtn').addEventListener('click', function() {
+                document.getElementById('addTaskModal').classList.remove('hidden');
+                // Set default due date to tomorrow
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                document.getElementById('taskDueDate').value = tomorrow.toISOString().split('T')[0];
+            });
+            
+            document.getElementById('cancelTaskBtn').addEventListener('click', function() {
+                document.getElementById('addTaskModal').classList.add('hidden');
+                clearTaskForm();
+            });
+            
+            document.getElementById('saveTaskBtn').addEventListener('click', saveTask);
+            document.getElementById('taskFilter').addEventListener('change', updateTaskList);
+            
+            // Vault functionality
+            document.querySelectorAll('.vault-tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Update active tab
+                    document.querySelectorAll('.vault-tab-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show corresponding content
+                    const tab = this.getAttribute('data-vault-tab');
+                    document.querySelectorAll('.vault-tab-content').forEach(content => content.classList.add('hidden'));
+                    document.getElementById(`vault-${tab}`).classList.remove('hidden');
+                });
+            });
+            
+            // Password vault functionality
+            document.getElementById('addPasswordBtn').addEventListener('click', function() {
+                document.getElementById('addPasswordModal').classList.remove('hidden');
+            });
+            
+            document.getElementById('cancelPasswordBtn').addEventListener('click', function() {
+                document.getElementById('addPasswordModal').classList.add('hidden');
+                clearPasswordForm();
+            });
+            
+            document.getElementById('savePasswordBtn').addEventListener('click', savePassword);
+            document.getElementById('togglePassword').addEventListener('click', function() {
+                const passwordField = document.getElementById('passwordValue');
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                    this.textContent = '🙈';
+                } else {
+                    passwordField.type = 'password';
+                    this.textContent = '👁';
+                }
+            });
+            
+            // Link vault functionality
+            document.getElementById('addLinkBtn').addEventListener('click', function() {
+                // Simple prompt for link (could be expanded to modal)
+                const name = prompt('Enter link name:');
+                if (!name) return;
+                
+                const url = prompt('Enter URL:');
+                if (!url) return;
+                
+                const link = {
+                    id: Date.now(),
+                    name: name,
+                    url: url,
+                    createdAt: new Date().toISOString()
+                };
+                
+                AppState.userData.vault.links.push(link);
+                saveAppData();
+                updateVaultLinks();
+                showNotification('Link Saved', `"${name}" has been added to your vault.`);
+                addXP(10);
+            });
+            
+            // PDF vault functionality (simplified - just stores metadata)
+            document.getElementById('addPdfBtn').addEventListener('click', function() {
+                // Create a file input dynamically
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = '.pdf';
+                fileInput.addEventListener('change', function(e) {
+                    if (e.target.files.length > 0) {
+                        const file = e.target.files[0];
+                        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                            showNotification('File Too Large', 'PDF must be under 5MB for localStorage.');
+                            return;
+                        }
+                        
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            const pdf = {
+                                id: Date.now(),
+                                name: file.name,
+                                size: file.size,
+                                data: event.target.result, // Base64 string
+                                uploadedAt: new Date().toISOString()
+                            };
+                            
+                            AppState.userData.vault.pdfs.push(pdf);
+                            saveAppData();
+                            updateVaultPDFs();
+                            showNotification('PDF Saved', `"${file.name}" has been added to your vault.`);
+                            addXP(15);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+                fileInput.click();
+            });
+            
+            // Profile functionality
+            document.getElementById('uploadBannerBtn').addEventListener('click', function() {
+                document.getElementById('bannerUpload').click();
+            });
+            
+            document.getElementById('bannerUpload').addEventListener('change', handleBannerUpload);
+            document.getElementById('cropBannerBtn').addEventListener('click', startCrop);
+            document.getElementById('saveCropBtn').addEventListener('click', saveCrop);
+            document.getElementById('cancelCropBtn').addEventListener('click', cancelCrop);
+            document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+            
+            // Backup functionality
+            document.getElementById('exportDataBtn').addEventListener('click', exportData);
+            document.getElementById('importFileBtn').addEventListener('click', function() {
+                document.getElementById('importFile').click();
+            });
+            
+            document.getElementById('importFile').addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    document.getElementById('importFileName').textContent = e.target.files[0].name;
+                    document.getElementById('importDataBtn').disabled = false;
+                }
+            });
+            
+            document.getElementById('importDataBtn').addEventListener('click', importData);
+            
+            // Data clearing functionality
+            document.getElementById('clearHabitsBtn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear all habits data?')) {
+                    AppState.userData.habits = [];
+                    saveAppData();
+                    updateHabitList();
+                    showNotification('Habits Cleared', 'All habits data has been removed.');
+                }
+            });
+            
+            document.getElementById('clearTasksBtn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear all tasks data?')) {
+                    AppState.userData.tasks = [];
+                    saveAppData();
+                    updateTaskList();
+                    showNotification('Tasks Cleared', 'All tasks data has been removed.');
+                }
+            });
+            
+            document.getElementById('clearAllBtn').addEventListener('click', function() {
+                if (confirm('WARNING: This will delete ALL your data. Are you sure?')) {
+                    localStorage.clear();
+                    // Reload the page to reset everything
+                    location.reload();
+                }
+            });
+            
+            // Close modals when clicking outside
+            document.addEventListener('click', function(e) {
+                if (e.target.id === 'addHabitModal') {
+                    document.getElementById('addHabitModal').classList.add('hidden');
+                    clearHabitForm();
+                }
+                if (e.target.id === 'addTaskModal') {
+                    document.getElementById('addTaskModal').classList.add('hidden');
+                    clearTaskForm();
+                }
+                if (e.target.id === 'addPasswordModal') {
+                    document.getElementById('addPasswordModal').classList.add('hidden');
+                    clearPasswordForm();
+                }
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // Escape key closes modals
+                if (e.key === 'Escape') {
+                    document.getElementById('addHabitModal').classList.add('hidden');
+                    document.getElementById('addTaskModal').classList.add('hidden');
+                    document.getElementById('addPasswordModal').classList.add('hidden');
+                    
+                    // Also cancel crop mode if active
+                    if (!document.getElementById('cropArea').classList.contains('hidden')) {
+                        cancelCrop();
+                    }
+                }
+                
+                // Left/Right arrow keys for navigation
+                if (e.key === 'ArrowLeft') {
+                    goToPreviousSection();
+                } else if (e.key === 'ArrowRight') {
+                    goToNextSection();
+                }
+            });
+        }
+
+        // Setup swipe gestures for mobile
+        function setupSwipeGestures() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            
+            const swipeArea = document.querySelector('.section-content');
+            
+            swipeArea.addEventListener('touchstart', function(event) {
+                touchStartX = event.changedTouches[0].screenX;
+                touchStartY = event.changedTouches[0].screenY;
+            });
+            
+            swipeArea.addEventListener('touchend', function(event) {
+                touchEndX = event.changedTouches[0].screenX;
+                touchEndY = event.changedTouches[0].screenY;
+                handleSwipe();
+            });
+            
+            function handleSwipe() {
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+                
+                // Only consider horizontal swipes with minimal vertical movement
+                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+                    if (deltaX > 0) {
+                        // Swipe right - go to previous section
+                        goToPreviousSection();
+                    } else {
+                        // Swipe left - go to next section
+                        goToNextSection();
+                    }
+                }
+            }
+        }
+
+        // Toggle mobile menu
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('open');
+            document.body.style.overflow = menu.classList.contains('open') ? 'hidden' : '';
+        }
+
+        // Go to the next section
+        function goToNextSection() {
+            const currentIndex = AppState.sections.indexOf(AppState.currentSection);
+            if (currentIndex < AppState.sections.length - 1) {
+                showSection(AppState.sections[currentIndex + 1]);
+            } else {
+                // Wrap around to first section
+                showSection(AppState.sections[0]);
+            }
+            playSound('click');
+        }
+
+        // Go to the previous section
+        function goToPreviousSection() {
+            const currentIndex = AppState.sections.indexOf(AppState.currentSection);
+            if (currentIndex > 0) {
+                showSection(AppState.sections[currentIndex - 1]);
+            } else {
+                // Wrap around to last section
+                showSection(AppState.sections[AppState.sections.length - 1]);
+            }
+            playSound('click');
+        }
+
+        // Show a specific section
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show the selected section
+            document.getElementById(sectionId).classList.add('active');
+            AppState.currentSection = sectionId;
+            
+            // Update section title
+            document.getElementById('currentSectionTitle').textContent = AppState.sectionTitles[sectionId];
+            
+            // Update section indicators
+            updateSectionIndicators(sectionId);
+            
+            // Update the section-specific content
+            switch(sectionId) {
+                case 'dashboard':
+                    updateDashboard();
+                    break;
+                case 'habits':
+                    updateHabitList();
+                    break;
+                case 'tasks':
+                    updateTaskList();
+                    break;
+                case 'vault':
+                    updateVaultPasswords();
+                    updateVaultLinks();
+                    updateVaultPDFs();
+                    break;
+                case 'profile':
+                    updateProfile();
+                    break;
+                case 'achievements':
+                    updateAchievements();
+                    break;
+            }
+            
+            // Play sound
+            playSound('click');
+        }
+
+        // Update section indicators
+        function updateSectionIndicators(activeSection) {
+            document.querySelectorAll('.section-indicator').forEach(indicator => {
+                const section = indicator.getAttribute('data-section');
+                if (section === activeSection) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            });
+        }
+
+        // Update the entire UI based on AppState
+        function updateUI() {
+            // Update level and XP displays
+            document.getElementById('currentLevel').textContent = AppState.level;
+            document.getElementById('currentXP').textContent = AppState.xp;
+            document.getElementById('nextLevelXP').textContent = getXPForLevel(AppState.level);
+            document.getElementById('avatarLevel').textContent = AppState.level;
+            
+            // Update XP bar
+            const xpForCurrentLevel = getXPForLevel(AppState.level - 1);
+            const xpForNextLevel = getXPForLevel(AppState.level);
+            const xpInThisLevel = AppState.xp - xpForCurrentLevel;
+            const xpNeededForNextLevel = xpForNextLevel - xpForCurrentLevel;
+            const xpPercentage = (xpInThisLevel / xpNeededForNextLevel) * 100;
+            
+            document.getElementById('xpBarFill').style.width = `${xpPercentage}%`;
+            
+            // Update streak
+            document.getElementById('streakCount').textContent = AppState.streak;
+            document.getElementById('lastLogin').textContent = formatDate(AppState.lastLogin);
+            
+            // Update dashboard stats
+            updateDashboard();
+            
+            // Update achievements progress
+            const unlockedCount = AppState.userData.achievements.filter(a => a.unlocked).length;
+            document.getElementById('achievementProgress').textContent = `${unlockedCount}/${AppState.userData.achievements.length}`;
+        }
+
+        // Update dashboard with current stats
+        function updateDashboard() {
+            // Calculate today's habits
+            const today = new Date().toISOString().split('T')[0];
+            let todayHabitsCompleted = 0;
+            let totalHabitsToday = 0;
+            
+            AppState.userData.habits.forEach(habit => {
+                if (habit.completions && habit.completions[today]) {
+                    if (habit.type === 'binary' && habit.completions[today] === true) {
+                        todayHabitsCompleted++;
+                    } else if (habit.type === 'countable' && habit.completions[today] >= habit.target) {
+                        todayHabitsCompleted++;
+                    }
+                }
+                totalHabitsToday++;
+            });
+            
+            // Calculate monthly tasks
+            const currentMonth = new Date().getMonth();
+            const monthlyTasks = AppState.userData.tasks.filter(task => {
+                const taskDate = new Date(task.createdAt);
+                return taskDate.getMonth() === currentMonth;
+            });
+            
+            const completedTasks = monthlyTasks.filter(task => task.completed).length;
+            
+            // Update dashboard stats
+            document.getElementById('dashLevel').textContent = AppState.level;
+            document.getElementById('dashXP').textContent = AppState.xp;
+            document.getElementById('dashHabits').textContent = `${todayHabitsCompleted}/${totalHabitsToday}`;
+            document.getElementById('dashTasks').textContent = `${completedTasks}/${monthlyTasks.length}`;
+            document.getElementById('dashStreak').textContent = `${AppState.streak} days`;
+            
+            // Update recent activity
+            updateRecentActivity();
+        }
+
+        // Update recent activity feed
+        function updateRecentActivity() {
+            const container = document.getElementById('recentActivity');
+            container.innerHTML = '';
+            
+            // Get recent completions (last 5)
+            const recentItems = [];
+            
+            // Add recent task completions
+            AppState.userData.tasks
+                .filter(task => task.completed)
+                .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
+                .slice(0, 3)
+                .forEach(task => {
+                    recentItems.push({
+                        type: 'task',
+                        text: `Completed task: "${task.title}"`,
+                        time: task.completedAt,
+                        xp: 25
+                    });
+                });
+            
+            // Add recent habit completions (today)
+            const today = new Date().toISOString().split('T')[0];
+            AppState.userData.habits.forEach(habit => {
+                if (habit.completions && habit.completions[today]) {
+                    recentItems.push({
+                        type: 'habit',
+                        text: `Completed habit: "${habit.name}"`,
+                        time: today,
+                        xp: 10
+                    });
+                }
+            });
+            
+            // Add recent achievements
+            AppState.userData.achievements
+                .filter(achievement => achievement.unlocked)
+                .sort((a, b) => b.unlockedAt - a.unlockedAt)
+                .slice(0, 2)
+                .forEach(achievement => {
+                    recentItems.push({
+                        type: 'achievement',
+                        text: `Unlocked: "${achievement.name}"`,
+                        time: achievement.unlockedAt,
+                        xp: achievement.xp
+                    });
+                });
+            
+            // Sort by time (newest first) and limit to 5
+            recentItems.sort((a, b) => new Date(b.time) - new Date(a.time));
+            const displayItems = recentItems.slice(0, 5);
+            
+            if (displayItems.length === 0) {
+                container.innerHTML = '<div class="text-gray-400 italic">No recent activity yet. Complete tasks to see activity here!</div>';
+                return;
+            }
+            
+            displayItems.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'p-3 bg-gray-800/30 rounded border border-gray-700';
+                div.innerHTML = `
+                    <div class="flex justify-between">
+                        <div class="flex-1">
+                            <div class="font-medium">${item.text}</div>
+                            <div class="text-xs text-gray-400 mt-1">${formatDate(item.time)}</div>
+                        </div>
+                        <div class="ml-2 text-neon-cyan font-bold">+${item.xp} XP</div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Update habit list UI
+        function updateHabitList() {
+            const container = document.getElementById('habitsList');
+            container.innerHTML = '';
+            
+            if (AppState.userData.habits.length === 0) {
+                container.innerHTML = '<div class="text-center p-8 text-gray-400">No habits yet. Add your first habit to get started!</div>';
+                return;
+            }
+            
+            AppState.userData.habits.forEach(habit => {
+                const habitElement = createHabitElement(habit);
+                container.appendChild(habitElement);
+            });
+        }
+
+        // Create HTML element for a habit
+        function createHabitElement(habit) {
+            const today = new Date().toISOString().split('T')[0];
+            const isCompletedToday = habit.completions && habit.completions[today];
+            const completionValue = isCompletedToday ? habit.completions[today] : 0;
+            
+            const div = document.createElement('div');
+            div.className = 'bg-gray-800/50 p-4 rounded-lg pixel-border';
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h3 class="text-lg font-bold">${habit.name}</h3>
+                        <div class="flex items-center mt-1">
+                            <span class="badge ${getCategoryColor(habit.category)} mr-2">${habit.category}</span>
+                            <span class="text-sm text-gray-400">${habit.type === 'binary' ? 'Daily' : 'Countable'}</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold neon-cyan">${habit.streak || 0}</div>
+                        <div class="text-xs text-gray-400">day streak</div>
+                    </div>
+                </div>
+                
+                ${habit.type === 'countable' ? `
+                    <div class="mb-4">
+                        <div class="flex justify-between mb-1">
+                            <span>Progress</span>
+                            <span>${completionValue || 0}/${habit.target}</span>
+                        </div>
+                        <div class="xp-bar">
+                            <div class="xp-bar-fill" style="width: ${(completionValue || 0) / habit.target * 100}%"></div>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="flex justify-between items-center">
+                    <div class="text-sm">
+                        ${isCompletedToday ? 
+                            `<span class="text-green-400">✅ Completed today</span>` : 
+                            `<span class="text-yellow-400">⏳ Not completed yet</span>`
+                        }
+                    </div>
+                    <div class="flex space-x-2">
+                        ${habit.type === 'binary' ? `
+                            <button class="complete-habit-btn mobile-touch-button px-3 py-2 ${isCompletedToday ? 'bg-gray-700' : 'bg-neon-blue'} rounded" data-id="${habit.id}">
+                                ${isCompletedToday ? 'Undo' : 'Complete'}
+                            </button>
+                        ` : `
+                            <button class="decrement-habit-btn mobile-touch-button px-3 py-2 bg-gray-700 rounded" data-id="${habit.id}">-</button>
+                            <button class="increment-habit-btn mobile-touch-button px-3 py-2 bg-neon-blue rounded" data-id="${habit.id}">+</button>
+                        `}
+                        <button class="delete-habit-btn mobile-touch-button px-3 py-2 bg-red-800/50 rounded" data-id="${habit.id}">Delete</button>
+                    </div>
+                </div>
+                
+                <!-- Mini calendar for this month -->
+                <div class="mt-4 pt-4 border-t border-gray-700">
+                    <div class="text-sm mb-2">This month:</div>
+                    <div class="flex flex-wrap gap-1">
+                        ${generateHabitCalendar(habit)}
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners to buttons
+            const habitId = habit.id;
+            
+            if (habit.type === 'binary') {
+                div.querySelector('.complete-habit-btn').addEventListener('click', function() {
+                    toggleHabitCompletion(habitId);
+                });
+            } else {
+                div.querySelector('.increment-habit-btn').addEventListener('click', function() {
+                    incrementHabit(habitId);
+                });
+                div.querySelector('.decrement-habit-btn').addEventListener('click', function() {
+                    decrementHabit(habitId);
+                });
+            }
+            
+            div.querySelector('.delete-habit-btn').addEventListener('click', function() {
+                deleteHabit(habitId);
+            });
+            
+            return div;
+        }
+
+        // Generate mini calendar for a habit
+        function generateHabitCalendar(habit) {
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+            
+            // Get days in current month
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            let html = '';
+            
+            // Generate days 1-31
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isToday = day === today.getDate();
+                const isCompleted = habit.completions && habit.completions[dateStr];
+                let dayClass = 'habit-day';
+                
+                if (isToday) dayClass += ' pulse';
+                if (isCompleted) {
+                    if (habit.type === 'binary' && isCompleted === true) {
+                        dayClass += ' completed';
+                    } else if (habit.type === 'countable' && isCompleted >= habit.target) {
+                        dayClass += ' completed';
+                    } else if (habit.type === 'countable' && isCompleted > 0) {
+                        dayClass += ' partial';
+                    }
+                }
+                
+                html += `<div class="${dayClass}" title="${dateStr}: ${isCompleted || 0}/${habit.type === 'countable' ? habit.target : 1}">${day}</div>`;
+            }
+            
+            return html;
+        }
+
+        // Get CSS class for category
+        function getCategoryColor(category) {
+            switch(category) {
+                case 'health': return 'bg-green-800/50 text-green-300';
+                case 'work': return 'bg-blue-800/50 text-blue-300';
+                case 'learning': return 'bg-purple-800/50 text-purple-300';
+                case 'personal': return 'bg-pink-800/50 text-pink-300';
+                default: return 'bg-gray-800/50 text-gray-300';
+            }
+        }
+
+        // Toggle habit completion (for binary habits)
+        function toggleHabitCompletion(habitId) {
+            const habit = AppState.userData.habits.find(h => h.id === habitId);
+            if (!habit) return;
+            
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (!habit.completions) {
+                habit.completions = {};
+            }
+            
+            if (habit.completions[today] === true) {
+                // Undo completion
+                delete habit.completions[today];
+                habit.streak = Math.max(0, (habit.streak || 0) - 1);
+                showNotification('Habit Undone', `"${habit.name}" marked as not completed.`);
+            } else {
+                // Mark as completed
+                habit.completions[today] = true;
+                habit.streak = (habit.streak || 0) + 1;
+                showNotification('Habit Completed!', `"${habit.name}" completed! Keep the streak going!`);
+                addXP(10);
+                playSound('complete');
+                
+                // Check for achievements
+                checkAchievement('first_habit');
+                checkAchievement('habit_king');
+                
+                // Update total habits completed
+                AppState.userData.stats.totalHabitsCompleted = (AppState.userData.stats.totalHabitsCompleted || 0) + 1;
+            }
+            
+            saveAppData();
+            updateHabitList();
+            updateUI();
+        }
+
+        // Increment countable habit
+        function incrementHabit(habitId) {
+            const habit = AppState.userData.habits.find(h => h.id === habitId);
+            if (!habit || habit.type !== 'countable') return;
+            
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (!habit.completions) {
+                habit.completions = {};
+            }
+            
+            const currentValue = habit.completions[today] || 0;
+            const newValue = currentValue + 1;
+            habit.completions[today] = newValue;
+            
+            // Check if target is reached
+            if (newValue === habit.target) {
+                habit.streak = (habit.streak || 0) + 1;
+                showNotification('Habit Target Reached!', `Completed "${habit.name}" for today!`);
+                addXP(10);
+                playSound('complete');
+                
+                // Check for achievements
+                checkAchievement('first_habit');
+                checkAchievement('habit_king');
+                
+                // Update total habits completed
+                AppState.userData.stats.totalHabitsCompleted = (AppState.userData.stats.totalHabitsCompleted || 0) + 1;
+            } else {
+                showNotification('Habit Progress', `${habit.name}: ${newValue}/${habit.target}`);
+                addXP(2); // Small XP for partial progress
+            }
+            
+            saveAppData();
+            updateHabitList();
+            updateUI();
+        }
+
+        // Decrement countable habit
+        function decrementHabit(habitId) {
+            const habit = AppState.userData.habits.find(h => h.id === habitId);
+            if (!habit || habit.type !== 'countable') return;
+            
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (!habit.completions) {
+                habit.completions = {};
+            }
+            
+            const currentValue = habit.completions[today] || 0;
+            if (currentValue > 0) {
+                const newValue = currentValue - 1;
+                habit.completions[today] = newValue;
+                
+                // If we were at target and now we're below, decrease streak
+                if (currentValue === habit.target && newValue < habit.target) {
+                    habit.streak = Math.max(0, (habit.streak || 0) - 1);
+                }
+                
+                showNotification('Habit Updated', `${habit.name}: ${newValue}/${habit.target}`);
+            }
+            
+            saveAppData();
+            updateHabitList();
+            updateUI();
+        }
+
+        // Delete a habit
+        function deleteHabit(habitId) {
+            if (confirm('Are you sure you want to delete this habit?')) {
+                AppState.userData.habits = AppState.userData.habits.filter(h => h.id !== habitId);
+                saveAppData();
+                updateHabitList();
+                showNotification('Habit Deleted', 'The habit has been removed.');
+            }
+        }
+
+        // Save a new habit
+        function saveHabit() {
+            const name = document.getElementById('habitName').value.trim();
+            const category = document.getElementById('habitCategory').value;
+            const type = document.getElementById('habitType').value;
+            const target = parseInt(document.getElementById('habitTarget').value) || 1;
+            
+            if (!name) {
+                showNotification('Error', 'Please enter a habit name.');
+                return;
+            }
+            
+            const newHabit = {
+                id: Date.now(),
+                name: name,
+                category: category,
+                type: type,
+                target: target,
+                completions: {},
+                streak: 0,
+                createdAt: new Date().toISOString()
+            };
+            
+            AppState.userData.habits.push(newHabit);
+            saveAppData();
+            updateHabitList();
+            
+            // Close modal and reset form
+            document.getElementById('addHabitModal').classList.add('hidden');
+            clearHabitForm();
+            
+            showNotification('Habit Added!', `"${name}" has been added to your tracker.`);
+            addXP(5);
+            playSound('complete');
+        }
+
+        // Clear habit form
+        function clearHabitForm() {
+            document.getElementById('habitName').value = '';
+            document.getElementById('habitCategory').value = 'health';
+            document.getElementById('habitType').value = 'binary';
+            document.getElementById('habitTarget').value = '1';
+        }
+
+        // Update task list UI
+        function updateTaskList() {
+            const container = document.getElementById('tasksList');
+            const filter = document.getElementById('taskFilter').value;
+            
+            container.innerHTML = '';
+            
+            // Apply filter
+            let filteredTasks = [...AppState.userData.tasks];
+            
+            switch(filter) {
+                case 'pending':
+                    filteredTasks = filteredTasks.filter(task => !task.completed);
+                    break;
+                case 'completed':
+                    filteredTasks = filteredTasks.filter(task => task.completed);
+                    break;
+                case 'high':
+                    filteredTasks = filteredTasks.filter(task => task.priority === 'high');
+                    break;
+                // 'all' shows everything
+            }
+            
+            // Sort by: incomplete first, then priority, then due date
+            filteredTasks.sort((a, b) => {
+                if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                if (a.priority !== b.priority) {
+                    const priorityOrder = { high: 0, medium: 1, low: 2 };
+                    return priorityOrder[a.priority] - priorityOrder[b.priority];
+                }
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            });
+            
+            if (filteredTasks.length === 0) {
+                container.innerHTML = '<div class="text-center p-8 text-gray-400">No tasks found. Add your first task!</div>';
+                updateTaskStats();
+                return;
+            }
+            
+            filteredTasks.forEach(task => {
+                const taskElement = createTaskElement(task);
+                container.appendChild(taskElement);
+            });
+            
+            updateTaskStats();
+        }
+
+        // Update task completion statistics
+        function updateTaskStats() {
+            const currentMonth = new Date().getMonth();
+            const monthlyTasks = AppState.userData.tasks.filter(task => {
+                const taskDate = new Date(task.createdAt);
+                return taskDate.getMonth() === currentMonth;
+            });
+            
+            const completedTasks = monthlyTasks.filter(task => task.completed).length;
+            const completionPercentage = monthlyTasks.length > 0 ? Math.round((completedTasks / monthlyTasks.length) * 100) : 0;
+            
+            // Update month display
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            const currentYear = new Date().getFullYear();
+            document.getElementById('currentMonth').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            
+            // Update completion percentage
+            document.getElementById('taskCompletion').textContent = `${completionPercentage}%`;
+            document.getElementById('taskProgressBar').style.width = `${completionPercentage}%`;
+        }
+
+        // Create HTML element for a task
+        function createTaskElement(task) {
+            const dueDate = new Date(task.dueDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            dueDate.setHours(0, 0, 0, 0);
+            
+            const isOverdue = dueDate < today && !task.completed;
+            const isDueToday = dueDate.getTime() === today.getTime();
+            
+            const priorityColors = {
+                high: 'bg-red-800/50 text-red-300',
+                medium: 'bg-yellow-800/50 text-yellow-300',
+                low: 'bg-green-800/50 text-green-300'
+            };
+            
+            const div = document.createElement('div');
+            div.className = `bg-gray-800/50 p-4 rounded-lg pixel-border ${isOverdue ? 'border-red-500' : ''}`;
+            div.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start flex-1">
+                        <button class="complete-task-btn mobile-touch-button mr-3 mt-1 w-6 h-6 rounded-full border-2 ${task.completed ? 'bg-neon-blue border-neon-blue' : 'border-gray-500'}" data-id="${task.id}">
+                            ${task.completed ? '✓' : ''}
+                        </button>
+                        <div class="flex-1">
+                            <h3 class="font-bold ${task.completed ? 'line-through text-gray-500' : ''}">${task.title}</h3>
+                            ${task.description ? `<p class="text-sm text-gray-400 mt-1">${task.description}</p>` : ''}
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <span class="badge ${priorityColors[task.priority]}">${task.priority} priority</span>
+                                <span class="text-sm ${isOverdue ? 'text-red-400' : isDueToday ? 'text-yellow-400' : 'text-gray-400'}">
+                                    Due: ${formatDate(task.dueDate)}
+                                    ${isOverdue ? ' (Overdue!)' : isDueToday ? ' (Today!)' : ''}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="delete-task-btn mobile-touch-button ml-2 text-gray-400 hover:text-red-400" data-id="${task.id}">
+                        🗑️
+                    </button>
+                </div>
+            `;
+            
+            // Add event listeners
+            const taskId = task.id;
+            div.querySelector('.complete-task-btn').addEventListener('click', function() {
+                completeTask(taskId);
+            });
+            
+            div.querySelector('.delete-task-btn').addEventListener('click', function() {
+                deleteTask(taskId);
+            });
+            
+            return div;
+        }
+
+        // Complete/uncomplete a task
+        function completeTask(taskId) {
+            const task = AppState.userData.tasks.find(t => t.id === taskId);
+            if (!task) return;
+            
+            task.completed = !task.completed;
+            
+            if (task.completed) {
+                task.completedAt = new Date().toISOString();
+                showNotification('Task Completed!', `"${task.title}" is now complete!`);
+                addXP(25);
+                playSound('complete');
+                
+                // Check for achievements
+                checkAchievement('task_master');
+                checkAchievement('all_tasks');
+                
+                // Update total tasks completed
+                AppState.userData.stats.totalTasksCompleted = (AppState.userData.stats.totalTasksCompleted || 0) + 1;
+            } else {
+                showNotification('Task Reopened', `"${task.title}" has been reopened.`);
+            }
+            
+            saveAppData();
+            updateTaskList();
+            updateUI();
+        }
+
+        // Delete a task
+        function deleteTask(taskId) {
+            if (confirm('Are you sure you want to delete this task?')) {
+                AppState.userData.tasks = AppState.userData.tasks.filter(t => t.id !== taskId);
+                saveAppData();
+                updateTaskList();
+                showNotification('Task Deleted', 'The task has been removed.');
+            }
+        }
+
+        // Save a new task
+        function saveTask() {
+            const title = document.getElementById('taskTitle').value.trim();
+            const description = document.getElementById('taskDescription').value.trim();
+            const priority = document.getElementById('taskPriority').value;
+            const dueDate = document.getElementById('taskDueDate').value;
+            
+            if (!title) {
+                showNotification('Error', 'Please enter a task title.');
+                return;
+            }
+            
+            if (!dueDate) {
+                showNotification('Error', 'Please select a due date.');
+                return;
+            }
+            
+            const newTask = {
+                id: Date.now(),
+                title: title,
+                description: description,
+                priority: priority,
+                dueDate: dueDate,
+                completed: false,
+                createdAt: new Date().toISOString()
+            };
+            
+            AppState.userData.tasks.push(newTask);
+            saveAppData();
+            updateTaskList();
+            
+            // Close modal and reset form
+            document.getElementById('addTaskModal').classList.add('hidden');
+            clearTaskForm();
+            
+            showNotification('Task Added!', `"${title}" has been added to your task list.`);
+            addXP(5);
+            playSound('complete');
+        }
+
+        // Clear task form
+        function clearTaskForm() {
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDescription').value = '';
+            document.getElementById('taskPriority').value = 'medium';
+            // Due date is set when opening modal
+        }
+
+        // Update vault passwords UI
+        function updateVaultPasswords() {
+            const container = document.getElementById('passwordsList');
+            container.innerHTML = '';
+            
+            if (AppState.userData.vault.passwords.length === 0) {
+                container.innerHTML = '<div class="text-center p-8 text-gray-400">No passwords saved yet. Add your first password!</div>';
+                return;
+            }
+            
+            AppState.userData.vault.passwords.forEach(password => {
+                const passwordElement = createPasswordElement(password);
+                container.appendChild(passwordElement);
+            });
+        }
+
+        // Create HTML element for a password
+        function createPasswordElement(password) {
+            const div = document.createElement('div');
+            div.className = 'bg-gray-800/50 p-4 rounded-lg pixel-border password-item';
+            div.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-bold">${password.website}</h3>
+                        <p class="text-gray-400 text-sm mt-1">${password.username}</p>
+                        <div class="mt-2">
+                            <span class="password-mask">••••••••</span>
+                            <button class="show-password-btn mobile-touch-button ml-2 text-sm text-neon-cyan" data-id="${password.id}">Show</button>
+                            <button class="copy-password-btn mobile-touch-button ml-2 text-sm text-neon-blue" data-id="${password.id}">Copy</button>
+                        </div>
+                    </div>
+                    <button class="delete-password-btn mobile-touch-button text-gray-400 hover:text-red-400" data-id="${password.id}">
+                        🗑️
+                    </button>
+                </div>
+            `;
+            
+            // Add event listeners
+            const passwordId = password.id;
+            let isRevealed = false;
+            
+            div.querySelector('.show-password-btn').addEventListener('click', function() {
+                const passwordMask = div.querySelector('.password-mask');
+                const showBtn = div.querySelector('.show-password-btn');
+                
+                if (isRevealed) {
+                    // Hide password
+                    passwordMask.textContent = '••••••••';
+                    showBtn.textContent = 'Show';
+                    isRevealed = false;
+                } else {
+                    // Show password (in real app, would decrypt)
+                    passwordMask.textContent = password.password || '********';
+                    showBtn.textContent = 'Hide';
+                    isRevealed = true;
+                }
+            });
+            
+            div.querySelector('.copy-password-btn').addEventListener('click', function() {
+                // In a real app, would decrypt password first
+                navigator.clipboard.writeText(password.password || '********')
+                    .then(() => {
+                        showNotification('Copied!', 'Password copied to clipboard.');
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy:', err);
+                    });
+            });
+            
+            div.querySelector('.delete-password-btn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this password?')) {
+                    AppState.userData.vault.passwords = AppState.userData.vault.passwords.filter(p => p.id !== passwordId);
+                    saveAppData();
+                    updateVaultPasswords();
+                    showNotification('Password Deleted', 'The password has been removed from your vault.');
+                }
+            });
+            
+            return div;
+        }
+
+        // Update vault links UI
+        function updateVaultLinks() {
+            const container = document.getElementById('linksList');
+            container.innerHTML = '';
+            
+            if (AppState.userData.vault.links.length === 0) {
+                container.innerHTML = '<div class="text-center p-8 text-gray-400">No links saved yet. Add your first link!</div>';
+                return;
+            }
+            
+            AppState.userData.vault.links.forEach(link => {
+                const linkElement = createLinkElement(link);
+                container.appendChild(linkElement);
+            });
+        }
+
+        // Create HTML element for a link
+        function createLinkElement(link) {
+            const div = document.createElement('div');
+            div.className = 'bg-gray-800/50 p-4 rounded-lg pixel-border';
+            div.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold">${link.name}</h3>
+                        <p class="text-gray-400 text-sm mt-1 truncate">${link.url}</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <a href="${link.url}" target="_blank" class="mobile-touch-button px-3 py-2 bg-neon-blue hover:bg-blue-600 rounded">
+                            Open
+                        </a>
+                        <button class="delete-link-btn mobile-touch-button px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded" data-id="${link.id}">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listener for delete button
+            const linkId = link.id;
+            div.querySelector('.delete-link-btn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this link?')) {
+                    AppState.userData.vault.links = AppState.userData.vault.links.filter(l => l.id !== linkId);
+                    saveAppData();
+                    updateVaultLinks();
+                    showNotification('Link Deleted', 'The link has been removed from your vault.');
+                }
+            });
+            
+            return div;
+        }
+
+        // Update vault PDFs UI
+        function updateVaultPDFs() {
+            const container = document.getElementById('pdfsList');
+            container.innerHTML = '';
+            
+            if (AppState.userData.vault.pdfs.length === 0) {
+                container.innerHTML = '<div class="text-center p-8 text-gray-400">No PDFs saved yet. Add your first PDF!</div>';
+                return;
+            }
+            
+            AppState.userData.vault.pdfs.forEach(pdf => {
+                const pdfElement = createPDFElement(pdf);
+                container.appendChild(pdfElement);
+            });
+        }
+
+        // Create HTML element for a PDF
+        function createPDFElement(pdf) {
+            const sizeMB = (pdf.size / (1024 * 1024)).toFixed(2);
+            
+            const div = document.createElement('div');
+            div.className = 'bg-gray-800/50 p-4 rounded-lg pixel-border';
+            div.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold truncate">${pdf.name}</h3>
+                        <p class="text-gray-400 text-sm mt-1">${sizeMB} MB • ${formatDate(pdf.uploadedAt)}</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <a href="${pdf.data}" target="_blank" class="mobile-touch-button px-3 py-2 bg-neon-blue hover:bg-blue-600 rounded">
+                            Open
+                        </a>
+                        <button class="delete-pdf-btn mobile-touch-button px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded" data-id="${pdf.id}">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listener for delete button
+            const pdfId = pdf.id;
+            div.querySelector('.delete-pdf-btn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this PDF?')) {
+                    AppState.userData.vault.pdfs = AppState.userData.vault.pdfs.filter(p => p.id !== pdfId);
+                    saveAppData();
+                    updateVaultPDFs();
+                    showNotification('PDF Deleted', 'The PDF has been removed from your vault.');
+                }
+            });
+            
+            return div;
+        }
+
+        // Save a new password (with basic encryption)
+        function savePassword() {
+            const website = document.getElementById('passwordWebsite').value.trim();
+            const username = document.getElementById('passwordUsername').value.trim();
+            const password = document.getElementById('passwordValue').value;
+            const masterPassword = document.getElementById('masterPassword').value;
+            
+            if (!website || !username || !password) {
+                showNotification('Error', 'Please fill in all fields.');
+                return;
+            }
+            
+            if (!masterPassword) {
+                showNotification('Error', 'Please enter a master password for encryption.');
+                return;
+            }
+            
+            // Basic "encryption" - in a real app, use a proper encryption library
+            // This is just for demonstration
+            const encryptedPassword = btoa(password + masterPassword);
+            
+            const newPassword = {
+                id: Date.now(),
+                website: website,
+                username: username,
+                password: encryptedPassword, // Store encrypted
+                createdAt: new Date().toISOString()
+            };
+            
+            AppState.userData.vault.passwords.push(newPassword);
+            saveAppData();
+            updateVaultPasswords();
+            
+            // Close modal and reset form
+            document.getElementById('addPasswordModal').classList.add('hidden');
+            clearPasswordForm();
+            
+            showNotification('Password Saved!', `Password for ${website} has been saved securely.`);
+            addXP(15);
+            playSound('complete');
+            
+            // Check for vault achievement
+            if (AppState.userData.vault.passwords.length >= 5) {
+                checkAchievement('vault_keeper');
+            }
+        }
+
+        // Clear password form
+        function clearPasswordForm() {
+            document.getElementById('passwordWebsite').value = '';
+            document.getElementById('passwordUsername').value = '';
+            document.getElementById('passwordValue').value = '';
+            document.getElementById('masterPassword').value = '';
+            document.getElementById('passwordValue').type = 'password';
+            document.getElementById('togglePassword').textContent = '👁';
+        }
+
+        // Update profile UI
+        function updateProfile() {
+            const profile = AppState.userData.profile;
+            
+            // Set profile values
+            document.getElementById('profileName').value = profile.name || '';
+            document.getElementById('profileBio').value = profile.bio || '';
+            document.getElementById('profileTheme').value = profile.theme || 'blue';
+            
+            // Set banner if exists
+            if (profile.banner) {
+                document.getElementById('bannerImage').src = profile.banner;
+                document.getElementById('bannerImage').classList.remove('hidden');
+                document.getElementById('bannerPlaceholder').classList.add('hidden');
+                document.getElementById('cropBannerBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('bannerImage').classList.add('hidden');
+                document.getElementById('bannerPlaceholder').classList.remove('hidden');
+                document.getElementById('cropBannerBtn').classList.add('hidden');
+            }
+        }
+
+        // Handle banner upload
+        function handleBannerUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                showNotification('Error', 'Please upload an image file.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('bannerImage').src = event.target.result;
+                document.getElementById('bannerImage').classList.remove('hidden');
+                document.getElementById('bannerPlaceholder').classList.add('hidden');
+                document.getElementById('cropBannerBtn').classList.remove('hidden');
+                
+                // Reset file input
+                document.getElementById('bannerUpload').value = '';
+                
+                showNotification('Image Uploaded', 'Banner image uploaded. You can now crop it.');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Start cropping the banner
+        function startCrop() {
+            const cropArea = document.getElementById('cropArea');
+            const bannerContainer = document.getElementById('bannerContainer');
+            const bannerImage = document.getElementById('bannerImage');
+            
+            // Show crop area and controls
+            cropArea.classList.remove('hidden');
+            document.getElementById('cropBannerBtn').classList.add('hidden');
+            document.getElementById('saveCropBtn').classList.remove('hidden');
+            document.getElementById('cancelCropBtn').classList.remove('hidden');
+            document.getElementById('uploadBannerBtn').classList.add('hidden');
+            
+            // Set initial crop area (center, 70% of container)
+            const containerRect = bannerContainer.getBoundingClientRect();
+            const cropSize = Math.min(containerRect.width, containerRect.height) * 0.7;
+            const cropX = (containerRect.width - cropSize) / 2;
+            const cropY = (containerRect.height - cropSize) / 2;
+            
+            cropArea.style.width = `${cropSize}px`;
+            cropArea.style.height = `${cropSize}px`;
+            cropArea.style.left = `${cropX}px`;
+            cropArea.style.top = `${cropY}px`;
+            
+            // Make crop area draggable
+            makeDraggable(cropArea, bannerContainer);
+            
+            // Make crop area resizable (simplified)
+            makeResizable(cropArea);
+        }
+
+        // Make element draggable within container
+        function makeDraggable(element, container) {
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+            
+            element.addEventListener('mousedown', startDrag);
+            element.addEventListener('touchstart', startDragTouch);
+            
+            function startDrag(e) {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = parseInt(element.style.left) || 0;
+                initialTop = parseInt(element.style.top) || 0;
+                
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stopDrag);
+                e.preventDefault();
+            }
+            
+            function startDragTouch(e) {
+                isDragging = true;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                initialLeft = parseInt(element.style.left) || 0;
+                initialTop = parseInt(element.style.top) || 0;
+                
+                document.addEventListener('touchmove', dragTouch);
+                document.addEventListener('touchend', stopDrag);
+                e.preventDefault();
+            }
+            
+            function drag(e) {
+                if (!isDragging) return;
+                
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                
+                const containerRect = container.getBoundingClientRect();
+                const elementRect = element.getBoundingClientRect();
+                
+                // Calculate new position with bounds checking
+                let newLeft = initialLeft + dx;
+                let newTop = initialTop + dy;
+                
+                // Keep within container bounds
+                newLeft = Math.max(0, Math.min(newLeft, containerRect.width - elementRect.width));
+                newTop = Math.max(0, Math.min(newTop, containerRect.height - elementRect.height));
+                
+                element.style.left = `${newLeft}px`;
+                element.style.top = `${newTop}px`;
+            }
+            
+            function dragTouch(e) {
+                if (!isDragging) return;
+                
+                const dx = e.touches[0].clientX - startX;
+                const dy = e.touches[0].clientY - startY;
+                
+                const containerRect = container.getBoundingClientRect();
+                const elementRect = element.getBoundingClientRect();
+                
+                // Calculate new position with bounds checking
+                let newLeft = initialLeft + dx;
+                let newTop = initialTop + dy;
+                
+                // Keep within container bounds
+                newLeft = Math.max(0, Math.min(newLeft, containerRect.width - elementRect.width));
+                newTop = Math.max(0, Math.min(newTop, containerRect.height - elementRect.height));
+                
+                element.style.left = `${newLeft}px`;
+                element.style.top = `${newTop}px`;
+            }
+            
+            function stopDrag() {
+                isDragging = false;
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('mouseup', stopDrag);
+                document.removeEventListener('touchmove', dragTouch);
+                document.removeEventListener('touchend', stopDrag);
+            }
+        }
+
+        // Make element resizable (simplified - just for demonstration)
+        function makeResizable(element) {
+            // This is a simplified version - in a full implementation,
+            // you would add resize handles and proper bounds checking
+            element.style.cursor = 'move';
+        }
+
+        // Save the cropped banner
+        function saveCrop() {
+            const bannerImage = document.getElementById('bannerImage');
+            const cropArea = document.getElementById('cropArea');
+            const bannerContainer = document.getElementById('bannerContainer');
+            
+            // Get crop coordinates relative to image
+            const containerRect = bannerContainer.getBoundingClientRect();
+            const cropRect = cropArea.getBoundingClientRect();
+            
+            // Calculate relative positions
+            const cropX = cropRect.left - containerRect.left;
+            const cropY = cropRect.top - containerRect.top;
+            const cropWidth = cropRect.width;
+            const cropHeight = cropRect.height;
+            
+            // Create a canvas to draw the cropped image
+            const canvas = document.createElement('canvas');
+            canvas.width = cropWidth;
+            canvas.height = cropHeight;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw the cropped portion
+            ctx.drawImage(
+                bannerImage,
+                cropX, cropY, cropWidth, cropHeight, // Source rectangle
+                0, 0, cropWidth, cropHeight // Destination rectangle
+            );
+            
+            // Convert canvas to data URL
+            const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            
+            // Save to profile
+            AppState.userData.profile.banner = croppedDataUrl;
+            saveAppData();
+            
+            // Update banner image
+            bannerImage.src = croppedDataUrl;
+            
+            // Exit crop mode
+            cancelCrop();
+            
+            showNotification('Banner Cropped', 'Your profile banner has been updated.');
+            addXP(20);
+            
+            // Check for achievement
+            checkAchievement('profile_complete');
+        }
+
+        // Cancel cropping
+        function cancelCrop() {
+            document.getElementById('cropArea').classList.add('hidden');
+            document.getElementById('cropBannerBtn').classList.remove('hidden');
+            document.getElementById('saveCropBtn').classList.add('hidden');
+            document.getElementById('cancelCropBtn').classList.add('hidden');
+            document.getElementById('uploadBannerBtn').classList.remove('hidden');
+        }
+
+        // Save profile
+        function saveProfile() {
+            const name = document.getElementById('profileName').value.trim();
+            const bio = document.getElementById('profileBio').value.trim();
+            const theme = document.getElementById('profileTheme').value;
+            
+            if (!name) {
+                showNotification('Error', 'Please enter a display name.');
+                return;
+            }
+            
+            AppState.userData.profile.name = name;
+            AppState.userData.profile.bio = bio;
+            AppState.userData.profile.theme = theme;
+            
+            saveAppData();
+            updateProfile();
+            
+            showNotification('Profile Saved!', 'Your profile has been updated.');
+            addXP(10);
+            
+            // Check for achievement
+            checkAchievement('profile_complete');
+        }
+
+        // Update achievements UI
+        function updateAchievements() {
+            const container = document.querySelector('#achievements .grid');
+            container.innerHTML = '';
+            
+            AppState.userData.achievements.forEach(achievement => {
+                const achievementElement = createAchievementElement(achievement);
+                container.appendChild(achievementElement);
+            });
+        }
+
+        // Create HTML element for an achievement
+        function createAchievementElement(achievement) {
+            const div = document.createElement('div');
+            div.className = 'text-center';
+            div.innerHTML = `
+                <div class="achievement-badge ${achievement.unlocked ? 'unlocked border-neon-cyan glow' : 'locked border-gray-700'} mb-2">
+                    ${achievement.icon}
+                </div>
+                <h4 class="text-sm font-bold mb-1">${achievement.name}</h4>
+                <p class="text-xs text-gray-400">${achievement.description}</p>
+                <div class="text-xs mt-1 neon-cyan">${achievement.xp} XP</div>
+                ${achievement.unlocked ? 
+                    '<div class="text-xs text-green-400 mt-1">Unlocked!</div>' : 
+                    '<div class="text-xs text-gray-500 mt-1">Locked</div>'
+                }
+            `;
+            
+            return div;
+        }
+
+        // Check for achievement unlocks
+        function checkAchievement(achievementId) {
+            const achievement = AppState.userData.achievements.find(a => a.id === achievementId);
+            if (!achievement || achievement.unlocked) return;
+            
+            // Check conditions
+            let shouldUnlock = false;
+            
+            switch(achievementId) {
+                case 'first_habit':
+                    shouldUnlock = AppState.userData.stats.totalHabitsCompleted >= 1;
+                    break;
+                case 'task_master':
+                    shouldUnlock = AppState.userData.stats.totalTasksCompleted >= 10;
+                    break;
+                case 'streak_3':
+                    shouldUnlock = AppState.streak >= 3;
+                    break;
+                case 'streak_7':
+                    shouldUnlock = AppState.streak >= 7;
+                    break;
+                case 'level_5':
+                    shouldUnlock = AppState.level >= 5;
+                    break;
+                case 'level_10':
+                    shouldUnlock = AppState.level >= 10;
+                    break;
+                case 'habit_king':
+                    shouldUnlock = AppState.userData.stats.totalHabitsCompleted >= 50;
+                    break;
+                case 'vault_keeper':
+                    const totalVaultItems = AppState.userData.vault.passwords.length + 
+                                           AppState.userData.vault.links.length + 
+                                           AppState.userData.vault.pdfs.length;
+                    shouldUnlock = totalVaultItems >= 5;
+                    break;
+                case 'all_tasks':
+                    // Check if all tasks this month are completed
+                    const currentMonth = new Date().getMonth();
+                    const monthlyTasks = AppState.userData.tasks.filter(task => {
+                        const taskDate = new Date(task.createdAt);
+                        return taskDate.getMonth() === currentMonth;
+                    });
+                    shouldUnlock = monthlyTasks.length > 0 && monthlyTasks.every(task => task.completed);
+                    break;
+                case 'profile_complete':
+                    shouldUnlock = !!AppState.userData.profile.name && 
+                                  AppState.userData.profile.name !== 'Tracker' &&
+                                  !!AppState.userData.profile.banner;
+                    break;
+                case 'early_bird':
+                case 'night_owl':
+                    // These would require time-based checks
+                    // For simplicity, we'll unlock them randomly for demonstration
+                    shouldUnlock = Math.random() > 0.7; // 30% chance
+                    break;
+            }
+            
+            if (shouldUnlock) {
+                achievement.unlocked = true;
+                achievement.unlockedAt = new Date().toISOString();
+                saveAppData();
+                
+                // Award XP
+                addXP(achievement.xp);
+                
+                // Show notification
+                showNotification('Achievement Unlocked!', `${achievement.name}: ${achievement.description}`, true);
+                
+                // Play sound
+                playSound('levelUp');
+                
+                // Update achievements UI if on that page
+                if (AppState.currentSection === 'achievements') {
+                    updateAchievements();
+                }
+            }
+        }
+
+        // Check daily login streak
+        function checkDailyLogin() {
+            const now = new Date();
+            const lastLogin = AppState.lastLogin ? new Date(AppState.lastLogin) : null;
+            
+            if (!lastLogin) {
+                // First login
+                AppState.streak = 1;
+                AppState.lastLogin = now.toISOString();
+                saveAppData();
+                return;
+            }
+            
+            // Reset time parts for comparison
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const lastLoginDay = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
+            
+            const diffDays = Math.floor((today - lastLoginDay) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) {
+                // Already logged in today
+                return;
+            } else if (diffDays === 1) {
+                // Consecutive day
+                AppState.streak++;
+                showNotification('Daily Login!', `Streak: ${AppState.streak} days! +10 XP`);
+                addXP(10);
+            } else if (diffDays > 1) {
+                // Broken streak
+                AppState.streak = 1;
+                showNotification('Welcome Back!', 'You have a new login streak starting today.');
+            }
+            
+            // Update last login
+            AppState.lastLogin = now.toISOString();
+            saveAppData();
+            updateUI();
+            
+            // Check streak achievements
+            checkAchievement('streak_3');
+            checkAchievement('streak_7');
+        }
+
+        // Add XP and check for level up
+        function addXP(amount) {
+            AppState.xp += amount;
+            
+            // Check for level up
+            const xpForNextLevel = getXPForLevel(AppState.level);
+            if (AppState.xp >= xpForNextLevel) {
+                levelUp();
+            }
+            
+            saveAppData();
+            updateUI();
+        }
+
+        // Level up the user
+        function levelUp() {
+            AppState.level++;
+            showNotification('Level Up!', `Congratulations! You reached level ${AppState.level}!`, true);
+            playSound('levelUp');
+            
+            // Check for level achievements
+            checkAchievement('level_5');
+            checkAchievement('level_10');
+        }
+
+        // Export all data as JSON file
+        function exportData() {
+            // Create export object
+            const exportData = {
+                version: '1.0',
+                exportedAt: new Date().toISOString(),
+                profile: AppState.userData.profile,
+                habits: AppState.userData.habits,
+                tasks: AppState.userData.tasks,
+                vault: AppState.userData.vault,
+                achievements: AppState.userData.achievements,
+                stats: AppState.userData.stats
+            };
+            
+            // Convert to JSON string
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            // Create download link
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `trackit-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Data Exported', 'All your Trackit data has been exported.');
+            addXP(5);
+        }
+
+        // Import data from JSON file
+        function importData() {
+            const fileInput = document.getElementById('importFile');
+            if (!fileInput.files.length) return;
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                try {
+                    const importedData = JSON.parse(event.target.result);
+                    
+                    // Validate the imported data
+                    if (!importedData.version || !importedData.profile) {
+                        throw new Error('Invalid Trackit backup file.');
+                    }
+                    
+                    // Confirm overwrite
+                    if (!confirm('This will overwrite all your current data. Are you sure?')) {
+                        return;
+                    }
+                    
+                    // Import the data
+                    AppState.userData.profile = importedData.profile || AppState.userData.profile;
+                    AppState.userData.habits = importedData.habits || AppState.userData.habits;
+                    AppState.userData.tasks = importedData.tasks || AppState.userData.tasks;
+                    AppState.userData.vault = importedData.vault || AppState.userData.vault;
+                    AppState.userData.achievements = importedData.achievements || AppState.userData.achievements;
+                    AppState.userData.stats = importedData.stats || AppState.userData.stats;
+                    
+                    // Update AppState from imported stats
+                    AppState.xp = AppState.userData.stats.xp || 0;
+                    AppState.level = AppState.userData.stats.level || 1;
+                    AppState.streak = AppState.userData.stats.streak || 0;
+                    AppState.lastLogin = AppState.userData.stats.lastLogin || new Date().toISOString();
+                    
+                    // Save to localStorage
+                    saveAppData();
+                    
+                    // Update UI
+                    updateUI();
+                    updateHabitList();
+                    updateTaskList();
+                    updateVaultPasswords();
+                    updateVaultLinks();
+                    updateVaultPDFs();
+                    updateProfile();
+                    updateAchievements();
+                    
+                    // Reset import form
+                    document.getElementById('importFileName').textContent = '';
+                    document.getElementById('importDataBtn').disabled = true;
+                    document.getElementById('importFile').value = '';
+                    
+                    showNotification('Data Imported', 'Your Trackit data has been successfully imported.', true);
+                    playSound('complete');
+                } catch (error) {
+                    console.error('Import error:', error);
+                    showNotification('Import Failed', 'The file could not be imported. Please make sure it\'s a valid Trackit backup file.');
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        // Show notification toast
+        function showNotification(title, message, isImportant = false) {
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            if (isImportant) {
+                toast.classList.add('border-neon-pink');
+                toast.classList.remove('border-neon-cyan');
+            } else {
+                toast.classList.add('border-neon-cyan');
+                toast.classList.remove('border-neon-pink');
+            }
+            
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('flex');
+            }, 5000);
+        }
+
+        // Play sound effect
+        function playSound(type) {
+            // Simple sound simulation using Web Audio API
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                switch(type) {
+                    case 'click':
+                        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.1);
+                        break;
+                    case 'complete':
+                        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                        oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+                        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.3);
+                        break;
+                    case 'levelUp':
+                        // Ascending scale
+                        const frequencies = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99]; // C4, E4, G4, C5, E5, G5
+                        frequencies.forEach((freq, index) => {
+                            oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + (index * 0.1));
+                        });
+                        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.6);
+                        break;
+                }
+            } catch (e) {
+                // Audio context not supported or autoplay blocked
+                console.log('Sound not played:', e);
+            }
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            if (!dateString) return 'Never';
+            
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Yesterday';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
