@@ -195,58 +195,6 @@
             letter-spacing: 2px;
         }
         
-        /* Mobile Navigation */
-        .mobile-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(10, 10, 26, 0.95);
-            backdrop-filter: blur(10px);
-            border-top: 2px solid var(--neon-blue);
-            z-index: 40;
-            padding: 10px 0;
-        }
-        
-        .mobile-nav-inner {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 100%;
-            padding: 0 20px;
-        }
-        
-        .mobile-nav-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .mobile-nav-btn:active {
-            transform: scale(0.9);
-        }
-        
-        .mobile-nav-center {
-            flex: 1;
-            text-align: center;
-            padding: 0 20px;
-        }
-        
-        .mobile-nav-title {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 0.8rem;
-            color: var(--neon-cyan);
-            text-shadow: 0 0 5px var(--neon-cyan);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
         /* Mobile optimizations */
         @media (max-width: 640px) {
             .mobile-touch-button {
@@ -260,50 +208,8 @@
             }
             
             .section-content {
-                padding-bottom: 100px; /* Space for mobile navigation */
+                padding-bottom: 80px; /* Space for mobile navigation */
             }
-            
-            .mobile-nav-btn {
-                min-width: 50px;
-                min-height: 50px;
-            }
-        }
-        
-        @media (min-width: 641px) {
-            .mobile-nav {
-                display: none;
-            }
-            
-            .section-content {
-                padding-bottom: 40px;
-            }
-        }
-        
-        /* Section indicators */
-        .section-indicators {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        
-        .section-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
-        }
-        
-        .section-indicator.active {
-            background-color: var(--neon-cyan);
-            box-shadow: 0 0 8px var(--neon-cyan);
-            transform: scale(1.2);
-        }
-        
-        /* Swipe support */
-        .swipe-area {
-            min-height: 100%;
         }
     </style>
 </head>
@@ -960,39 +866,13 @@
         </section>
     </main>
 
-    <!-- Mobile Navigation Bar -->
-    <div class="mobile-nav">
-        <div class="mobile-nav-inner">
-            <button id="prevSectionBtn" class="mobile-nav-btn bg-gray-800/80 border border-neon-blue/50 text-neon-cyan hover:bg-gray-700/80 mobile-touch-button">
-                ←
-            </button>
-            
-            <div class="mobile-nav-center">
-                <div id="currentSectionTitle" class="mobile-nav-title">Dashboard</div>
-                <div class="section-indicators">
-                    <div class="section-indicator active" data-section="dashboard"></div>
-                    <div class="section-indicator" data-section="habits"></div>
-                    <div class="section-indicator" data-section="tasks"></div>
-                    <div class="section-indicator" data-section="vault"></div>
-                    <div class="section-indicator" data-section="profile"></div>
-                    <div class="section-indicator" data-section="achievements"></div>
-                    <div class="section-indicator" data-section="backup"></div>
-                </div>
-            </div>
-            
-            <button id="nextSectionBtn" class="mobile-nav-btn bg-gray-800/80 border border-neon-blue/50 text-neon-cyan hover:bg-gray-700/80 mobile-touch-button">
-                →
-            </button>
-        </div>
-    </div>
-
     <!-- Audio Context for Sound Effects -->
     <audio id="clickSound" src=""></audio>
     <audio id="completeSound" src=""></audio>
     <audio id="levelUpSound" src=""></audio>
 
     <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-20 right-4 bg-gray-800 border-l-4 border-neon-cyan p-4 rounded-lg shadow-lg max-w-xs z-50 hidden">
+    <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 border-l-4 border-neon-cyan p-4 rounded-lg shadow-lg max-w-xs z-50 hidden">
         <div class="flex items-start">
             <div class="mr-3 text-2xl">🎉</div>
             <div>
@@ -1020,16 +900,6 @@
         // Application State
         const AppState = {
             currentSection: 'dashboard',
-            sections: ['dashboard', 'habits', 'tasks', 'vault', 'profile', 'achievements', 'backup'],
-            sectionTitles: {
-                dashboard: 'Dashboard',
-                habits: 'Habit Tracker',
-                tasks: 'Task Manager',
-                vault: 'Resource Vault',
-                profile: 'Profile',
-                achievements: 'Achievements',
-                backup: 'Backup & Restore'
-            },
             userData: {
                 profile: null,
                 habits: [],
@@ -1084,9 +954,6 @@
             
             // Show dashboard by default
             showSection('dashboard');
-            
-            // Setup swipe gestures for mobile
-            setupSwipeGestures();
             
             // Play startup sound
             playSound('click');
@@ -1181,18 +1048,6 @@
                     const section = this.getAttribute('data-section');
                     showSection(section);
                     toggleMobileMenu();
-                });
-            });
-            
-            // Navigation buttons
-            document.getElementById('prevSectionBtn').addEventListener('click', goToPreviousSection);
-            document.getElementById('nextSectionBtn').addEventListener('click', goToNextSection);
-            
-            // Section indicator clicks
-            document.querySelectorAll('.section-indicator').forEach(indicator => {
-                indicator.addEventListener('click', function() {
-                    const section = this.getAttribute('data-section');
-                    showSection(section);
                 });
             });
             
@@ -1430,51 +1285,7 @@
                         cancelCrop();
                     }
                 }
-                
-                // Left/Right arrow keys for navigation
-                if (e.key === 'ArrowLeft') {
-                    goToPreviousSection();
-                } else if (e.key === 'ArrowRight') {
-                    goToNextSection();
-                }
             });
-        }
-
-        // Setup swipe gestures for mobile
-        function setupSwipeGestures() {
-            let touchStartX = 0;
-            let touchStartY = 0;
-            let touchEndX = 0;
-            let touchEndY = 0;
-            
-            const swipeArea = document.querySelector('.section-content');
-            
-            swipeArea.addEventListener('touchstart', function(event) {
-                touchStartX = event.changedTouches[0].screenX;
-                touchStartY = event.changedTouches[0].screenY;
-            });
-            
-            swipeArea.addEventListener('touchend', function(event) {
-                touchEndX = event.changedTouches[0].screenX;
-                touchEndY = event.changedTouches[0].screenY;
-                handleSwipe();
-            });
-            
-            function handleSwipe() {
-                const deltaX = touchEndX - touchStartX;
-                const deltaY = touchEndY - touchStartY;
-                
-                // Only consider horizontal swipes with minimal vertical movement
-                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-                    if (deltaX > 0) {
-                        // Swipe right - go to previous section
-                        goToPreviousSection();
-                    } else {
-                        // Swipe left - go to next section
-                        goToNextSection();
-                    }
-                }
-            }
         }
 
         // Toggle mobile menu
@@ -1482,30 +1293,6 @@
             const menu = document.getElementById('mobileMenu');
             menu.classList.toggle('open');
             document.body.style.overflow = menu.classList.contains('open') ? 'hidden' : '';
-        }
-
-        // Go to the next section
-        function goToNextSection() {
-            const currentIndex = AppState.sections.indexOf(AppState.currentSection);
-            if (currentIndex < AppState.sections.length - 1) {
-                showSection(AppState.sections[currentIndex + 1]);
-            } else {
-                // Wrap around to first section
-                showSection(AppState.sections[0]);
-            }
-            playSound('click');
-        }
-
-        // Go to the previous section
-        function goToPreviousSection() {
-            const currentIndex = AppState.sections.indexOf(AppState.currentSection);
-            if (currentIndex > 0) {
-                showSection(AppState.sections[currentIndex - 1]);
-            } else {
-                // Wrap around to last section
-                showSection(AppState.sections[AppState.sections.length - 1]);
-            }
-            playSound('click');
         }
 
         // Show a specific section
@@ -1518,12 +1305,6 @@
             // Show the selected section
             document.getElementById(sectionId).classList.add('active');
             AppState.currentSection = sectionId;
-            
-            // Update section title
-            document.getElementById('currentSectionTitle').textContent = AppState.sectionTitles[sectionId];
-            
-            // Update section indicators
-            updateSectionIndicators(sectionId);
             
             // Update the section-specific content
             switch(sectionId) {
@@ -1551,18 +1332,6 @@
             
             // Play sound
             playSound('click');
-        }
-
-        // Update section indicators
-        function updateSectionIndicators(activeSection) {
-            document.querySelectorAll('.section-indicator').forEach(indicator => {
-                const section = indicator.getAttribute('data-section');
-                if (section === activeSection) {
-                    indicator.classList.add('active');
-                } else {
-                    indicator.classList.remove('active');
-                }
-            });
         }
 
         // Update the entire UI based on AppState
